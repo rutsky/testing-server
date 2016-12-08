@@ -121,18 +121,18 @@ def main():
         dest="log_level",
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
         default='INFO',
-        help="Set the logging level. Default: %(default)s."
+        help="Set the logging level. Default: %(default)s",
     )
     parser.add_argument(
         "-H", "--hostname",
+        default="localhost",
         help="TCP/IP hostname to serve on (default: %(default)r)",
-        default="localhost"
     )
     parser.add_argument(
         "-P", "--port",
-        help="TCP/IP port to serve on (default: %(default)r)",
         type=int,
-        default="8080"
+        default="8080",
+        help="TCP/IP port to serve on (default: %(default)r)",
     )
 
     args = parser.parse_args()
