@@ -4,6 +4,8 @@ import asyncio
 import signal
 import functools
 import contextlib
+import traceback
+import json
 
 import aiohttp.web
 import yarl
@@ -28,16 +30,88 @@ def _setup_termination(loop: asyncio.AbstractEventLoop):
                                 functools.partial(on_signal, signame))
 
 
+JSEND_DUMP_TRACEBACKS = True
+
+
+class JSendError(Exception):
+    """Internal server error wrapper"""
+
+    def __init__(self, message, code=None, data=None, http_code=500):
+        self.message = message
+        self.code = code
+        self.data = data
+        self.http_code = http_code
+
+
+class JSendFail(Exception):
+    """Bad request error wrapper"""
+
+    def __init__(self, message, data=None, http_code=400):
+        self.message = message
+        self.data = data
+        self.http_code = http_code
+
+
+def jsend_handler(handler):
+    @functools.wraps(handler)
+    async def wrapper(*args):
+        response = {
+            'status': 'success'
+        }
+
+        http_code = 200
+
+        try:
+            response['data'] = await handler(*args)
+
+        except JSendFail as ex:
+            http_code = ex.http_code
+            response['status'] = 'fail'
+            response['message'] = ex.message
+
+        except JSendError as ex:
+            http_code = ex.http_code
+            response['status'] = 'error'
+            response['message'] = ex.message
+
+            if ex.code is not None:
+                response['code'] = ex.code
+            if ex.data is not None:
+                response['data'] = ex.data
+
+        except Exception:
+            http_code = 500
+            response['status'] = 'error'
+            message = "Internal server error."
+
+            if JSEND_DUMP_TRACEBACKS:
+                message += "\n" + traceback.format_exc()
+
+            response['message'] = message
+
+        return aiohttp.web.Response(
+            text=json.dumps(response),
+            content_type='application/json',
+            status=http_code
+        )
+
+    return wrapper
+
+
 class Server:
     def __init__(self, app, *, loop):
         self._app = app
         self._loop = loop
 
     async def start(self):
-        pass
+        self._app.router.add_get('/', self.handler_default)
 
     async def stop(self):
         pass
+
+    @jsend_handler
+    async def handler_default(self, request):
+        return "Testing server."
 
 
 def main():
