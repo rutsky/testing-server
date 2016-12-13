@@ -124,12 +124,25 @@ class Server:
     async def start(self):
         self._app.router.add_get('/', self.handler_default)
 
+        self._app.router.add_post('/login', self.handler_not_implemented)
+        self._app.router.add_get(
+            '/users', self.handler_not_implemented)
+        self._app.router.add_get(
+            '/users/{username}/{home_assignment}/{revision}/',
+            self.handler_not_implemented)
+
+        self._app.router.add_get('/ws', self.handler_not_implemented)
+
     async def stop(self):
         pass
 
     @jsend_handler
     async def handler_default(self, request):
         return "Testing server."
+
+    @jsend_handler
+    async def handler_not_implemented(self, request):
+        raise JSendFail("Not implemented")
 
 
 def run_server(hostname, port):
