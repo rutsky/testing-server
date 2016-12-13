@@ -107,9 +107,8 @@ def jsend_handler(handler):
 
             sentry_client.captureException()
 
-        return aiohttp.web.Response(
-            text=json.dumps(response),
-            content_type='application/json',
+        return aiohttp.web.json_response(
+            data=response,
             status=http_code
         )
 
