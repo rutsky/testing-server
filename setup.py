@@ -25,6 +25,7 @@ setup(
     ] + pytest_runner,
     tests_require=[
         'pytest',
+        'pytest-aiohttp',
     ],
     test_suite='tests',
     install_requires=[
