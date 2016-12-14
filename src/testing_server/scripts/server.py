@@ -200,7 +200,7 @@ def run_server(hostname, port):
         # Stop our server first to allow graceful termination of persistent
         # connections (e.g. WebSockets).
         # Notice that top of the stack will be executed earlier.
-        exit_stack.callback(lambda: stop_app)
+        exit_stack.callback(stop_app)
         exit_stack.callback(
             lambda: loop.run_until_complete(app_server.stop()))
 
