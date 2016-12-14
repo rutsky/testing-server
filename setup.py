@@ -23,6 +23,12 @@ def read_file(filename):
 about = {}
 exec(read_file(os.path.join('src', 'testing_server', '__about__.py')), about)
 
+tests_deps = [
+    'pytest',
+    'pytest-aiohttp',
+    'pytest-logging',
+]
+
 setup(
     name='testing-server',
     version=about['__version__'],
@@ -32,11 +38,7 @@ setup(
     packages=find_packages('src'),
     setup_requires=[
     ] + pytest_runner,
-    tests_require=[
-        'pytest',
-        'pytest-aiohttp',
-        'pytest-logging',
-    ],
+    tests_require=tests_deps,
     test_suite='tests',
     install_requires=[
         'aiohttp',
@@ -44,6 +46,9 @@ setup(
         'raven',
         'raven-aiohttp',
     ],
+    extras_require={
+        'test': tests_deps
+    },
     entry_points={
         'console_scripts': [
             'testing-server=testing_server.scripts.server:main'
