@@ -51,6 +51,18 @@ def _setup_sentry(*, loop):
     handler = SentryHandler(sentry_client, level='ERROR')
     raven.conf.setup_logging(handler)
 
+    prev_loop_exception_handler = loop.get_exception_handler()
+
+    def loop_exception_handler(loop, context):
+        sentry_client.captureMessage(
+            "Event loop caught unhandled exception: {}".format(
+                context['message']),
+            extra=context
+        )
+
+        if prev_loop_exception_handler is not None:
+            return prev_loop_exception_handler(loop, context)
+
 
 JSEND_DUMP_TRACEBACKS = True
 
