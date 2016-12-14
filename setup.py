@@ -25,7 +25,7 @@ exec(read_file(os.path.join('src', 'testing_server', '__about__.py')), about)
 
 setup(
     name='testing-server',
-    version=about.__version__,
+    version=about['__version__'],
     description="Testing server",
     long_description=read_file('README.rst'),
     package_dir={'': 'src'},
