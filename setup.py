@@ -1,4 +1,5 @@
 import sys
+import os
 from setuptools import setup, find_packages
 
 needs_pytest = {'pytest', 'test'}.intersection(sys.argv)
@@ -14,11 +15,19 @@ if sys.version_info < min_python_info:
     sys.exit(1)
 
 
+def read_file(filename):
+    abs_path = os.path.join(os.path.dirname(__file__), filename)
+    with open(abs_path, encoding='utf-8') as f:
+        return f.read()
+
+about = {}
+exec(read_file(os.path.join('src', 'testing_server', '__about__.py')), about)
+
 setup(
     name='testing-server',
-    version='0.0.1',
+    version=about.__version__,
     description="Testing server",
-    long_description=open('README.rst').read(),
+    long_description=read_file('README.rst'),
     package_dir={'': 'src'},
     packages=find_packages('src'),
     setup_requires=[

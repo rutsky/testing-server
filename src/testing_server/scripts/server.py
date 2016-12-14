@@ -13,6 +13,10 @@ import yarl
 import raven
 import raven_aiohttp
 
+from testing_server import __version__ as PROJECT_VERSION
+
+__all__ = ('Server', 'main')
+
 
 _logger = logging.getLogger(__name__)
 
@@ -39,7 +43,9 @@ sentry_client = None
 def _setup_sentry(*, loop):
     global sentry_client
     sentry_client = raven.Client(
-        transport=functools.partial(raven_aiohttp.AioHttpTransport, loop=loop))
+        transport=functools.partial(raven_aiohttp.AioHttpTransport, loop=loop),
+        release=PROJECT_VERSION
+    )
 
 
 JSEND_DUMP_TRACEBACKS = True
