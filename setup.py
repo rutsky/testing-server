@@ -26,6 +26,7 @@ setup(
     tests_require=[
         'pytest',
         'pytest-aiohttp',
+        'pytest-logging',
     ],
     test_suite='tests',
     install_requires=[
