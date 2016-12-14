@@ -5,7 +5,6 @@ import signal
 import functools
 import contextlib
 import traceback
-import json
 import sys
 
 import aiohttp.web
