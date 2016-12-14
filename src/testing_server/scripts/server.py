@@ -11,6 +11,7 @@ import aiohttp.web
 import yarl
 import raven
 import raven_aiohttp
+from raven.handlers.logging import SentryHandler
 
 from testing_server import __version__ as PROJECT_VERSION
 
@@ -45,6 +46,10 @@ def _setup_sentry(*, loop):
         transport=functools.partial(raven_aiohttp.AioHttpTransport, loop=loop),
         release=PROJECT_VERSION
     )
+
+    # Pass error messages from log to Sentry.
+    handler = SentryHandler(sentry_client, level='ERROR')
+    raven.conf.setup_logging(handler)
 
 
 JSEND_DUMP_TRACEBACKS = True
