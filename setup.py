@@ -42,9 +42,11 @@ setup(
     test_suite='tests',
     install_requires=[
         'aiohttp',
-        'yarl',
+        'aiohttp-cors',
+        'passlib',
         'raven',
         'raven-aiohttp',
+        'yarl',
     ],
     extras_require={
         'test': tests_deps
