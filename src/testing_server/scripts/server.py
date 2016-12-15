@@ -80,9 +80,14 @@ class JSendError(Exception):
 class JSendFail(Exception):
     """Bad request error wrapper"""
 
-    def __init__(self, message, data=None, http_code=400):
-        self.message = message
-        self.data = data
+    def __init__(self, message=None, data=None, http_code=400):
+        if message is not None:
+            if data is None:
+                self.data = dict(message=message)
+            else:
+                self.data = dict(message=message).update(self.data)
+        else:
+            self.data = data
         self.http_code = http_code
 
 
@@ -101,7 +106,8 @@ def jsend_handler(handler):
         except JSendFail as ex:
             http_code = ex.http_code
             response['status'] = 'fail'
-            response['message'] = ex.message
+            if ex.data is not None:
+                response['data'] = ex.data
 
             sentry_client.captureException()
 
