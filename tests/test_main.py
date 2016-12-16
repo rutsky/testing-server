@@ -5,6 +5,7 @@ import os
 
 import pytest
 import aiohttp
+from aiohttp import hdrs
 
 from testing_server.server import Server
 from testing_server.token_provider import JWTTokenProvider
@@ -54,10 +55,17 @@ async def test_server_setup(client):
     data = await get_success_resp_data(resp)
     assert "Testing server" in data
 
+
 async def test_server_auth(client):
     resp = await client.post(
         '/api/login',
         data=json.dumps(dict(login='user', password='password')),
         headers={'Content-Type': 'application/json'})
-    data = await get_success_resp_data(resp)
-    assert data
+    token = await get_success_resp_data(resp)
+    assert token
+
+    resp = await client.get(
+        '/api/check_token',
+        headers={hdrs.AUTHORIZATION: 'Bearer {}'.format(token)})
+    message = await get_success_resp_data(resp)
+    assert 'valid' in message

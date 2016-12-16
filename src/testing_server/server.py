@@ -4,13 +4,15 @@ import aiohttp.hdrs
 import aiohttp.web
 import aiohttp_cors
 
-from testing_server import abc
-from testing_server.jsend import JSendFail, jsend_handler
+from . import abc
+from .jsend import JSendFail, jsend_handler
+from .auth_mixin import AuthMixin, requires_login
 
 __all__ = ('Server',)
 
 
-class Server:
+class Server(AuthMixin):
+
     def __init__(self,
                  app,
                  credentials_checker: abc.AbstractCredentialsChecker,
@@ -18,9 +20,10 @@ class Server:
                  *,
                  loop,
                  enable_cors=False):
+        super().__init__(token_provider)
+
         self._app = app
         self._credentials_checker = credentials_checker
-        self._token_provider = token_provider
         self._loop = loop
         self._enable_cors = enable_cors
 
@@ -43,6 +46,9 @@ class Server:
         api_prefix = '/api'
         wrap(self._app.router.add_post(
             api_prefix + '/login', self.post_login))
+
+        wrap(self._app.router.add_get(
+            api_prefix + '/check_token', self.get_check_token))
 
         self._app.router.add_get(
             '/users', self.handler_not_implemented)
@@ -73,6 +79,11 @@ class Server:
         return "Testing server."
 
     @jsend_handler
+    @requires_login()
+    async def get_check_token(self, request):
+        return "Token is valid."
+
+    @jsend_handler
     async def post_login(self, request: aiohttp.web.Request):
         json_body = await self._json_body(request)
 
@@ -98,7 +109,7 @@ class Server:
         else:
             logging.info("Authentication succeed for user {!r}".format(login))
 
-        token = (await self._token_provider.generate_token(login)).decode()
+        token = (await self.token_provider.generate_token(login)).decode()
 
         return token
 
