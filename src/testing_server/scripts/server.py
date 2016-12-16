@@ -6,6 +6,7 @@ import functools
 import contextlib
 import traceback
 import sys
+import json
 
 import aiohttp.web
 import aiohttp_cors
@@ -138,8 +139,21 @@ def jsend_handler(handler):
 
             sentry_client.captureException()
 
+        try:
+            text = json.dumps(response)
+        except TypeError:
+            sentry_client.captureException()
+
+            return aiohttp.web.json_response(
+                data={
+                    'status': 'error',
+                    'message': "Internal server error: failed to "
+                               "JSON-serialize response."
+                },
+                status=500)
+
         return aiohttp.web.json_response(
-            data=response,
+            text=text,
             status=http_code
         )
 
