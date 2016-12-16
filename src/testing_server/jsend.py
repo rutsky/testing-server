@@ -77,6 +77,9 @@ def jsend_handler(handler):
 
             response['message'] = message
 
+            _logger.exception(
+                "Handler raised unknown exception.")
+
         try:
             text = json.dumps(response)
         except TypeError:
