@@ -4,6 +4,7 @@ import logging
 import traceback
 
 import aiohttp.web
+from aiohttp import hdrs
 
 __all__ = ('JSendError', 'JSendFail', 'jsend_handler')
 
@@ -44,6 +45,7 @@ def jsend_handler(handler):
         }
 
         http_code = 200
+        headers = None
 
         try:
             response['data'] = await handler(*args)
@@ -66,6 +68,16 @@ def jsend_handler(handler):
 
             _logger.exception(
                 "Handler raised exception: {}".format(ex.message))
+
+        except aiohttp.web.HTTPException as ex:
+            headers = ex.headers
+            if hdrs.CONTENT_TYPE in headers:
+                del headers[hdrs.CONTENT_TYPE]
+
+            http_code = ex.status_code
+
+            response['status'] = 'fail'
+            response['data'] = dict(message=ex.text)
 
         except Exception:
             http_code = 500
@@ -95,7 +107,8 @@ def jsend_handler(handler):
 
         return aiohttp.web.json_response(
             text=text,
-            status=http_code
+            status=http_code,
+            headers=headers
         )
 
     return wrapper
