@@ -120,8 +120,6 @@ def jsend_handler(handler):
             if ex.data is not None:
                 response['data'] = ex.data
 
-            sentry_client.captureException()
-
         except JSendError as ex:
             http_code = ex.http_code
             response['status'] = 'error'
@@ -132,7 +130,8 @@ def jsend_handler(handler):
             if ex.data is not None:
                 response['data'] = ex.data
 
-            sentry_client.captureException()
+            _logger.exception(
+                "Handler raised exception: {}".format(ex.message))
 
         except Exception:
             http_code = 500
@@ -144,12 +143,10 @@ def jsend_handler(handler):
 
             response['message'] = message
 
-            sentry_client.captureException()
-
         try:
             text = json.dumps(response)
         except TypeError:
-            sentry_client.captureException()
+            _logger.exception("Response serialization failed.")
 
             return aiohttp.web.json_response(
                 data={
