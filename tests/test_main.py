@@ -3,7 +3,7 @@ import asyncio
 import pytest
 import aiohttp
 
-from testing_server.scripts.server import Server
+from testing_server.server import Server
 
 
 @pytest.fixture
