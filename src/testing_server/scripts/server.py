@@ -1,23 +1,22 @@
-import logging
 import argparse
 import asyncio
-import signal
-import functools
 import contextlib
-import traceback
+import functools
+import logging
+import signal
 import sys
-import json
 
 import aiohttp.web
 import aiohttp_cors
-import yarl
 import raven
 import raven_aiohttp
+import yarl
 from raven.handlers.logging import SentryHandler
 
 from testing_server import __version__ as PROJECT_VERSION
 from testing_server import abc
 from testing_server.credentials_checker import HtpasswdCredentialsChecker
+from testing_server.jsend import JSendFail, jsend_handler
 from testing_server.token_provider import JWTTokenProvider
 
 __all__ = ('Server', 'main')
@@ -74,95 +73,6 @@ def _setup_sentry(*, loop):
             return prev_loop_exception_handler(loop, context)
 
     loop.set_exception_handler(loop_exception_handler)
-
-
-JSEND_DUMP_TRACEBACKS = False
-
-
-class JSendError(Exception):
-    """Internal server error wrapper"""
-
-    def __init__(self, message, code=None, data=None, http_code=500):
-        self.message = message
-        self.code = code
-        self.data = data
-        self.http_code = http_code
-
-
-class JSendFail(Exception):
-    """Bad request error wrapper"""
-
-    def __init__(self, message=None, data=None, http_code=400):
-        if message is not None:
-            if data is None:
-                self.data = dict(message=message)
-            else:
-                self.data = dict(message=message).update(self.data)
-        else:
-            self.data = data
-        self.http_code = http_code
-
-
-def jsend_handler(handler):
-    @functools.wraps(handler)
-    async def wrapper(*args):
-        response = {
-            'status': 'success'
-        }
-
-        http_code = 200
-
-        try:
-            response['data'] = await handler(*args)
-
-        except JSendFail as ex:
-            http_code = ex.http_code
-            response['status'] = 'fail'
-            if ex.data is not None:
-                response['data'] = ex.data
-
-        except JSendError as ex:
-            http_code = ex.http_code
-            response['status'] = 'error'
-            response['message'] = ex.message
-
-            if ex.code is not None:
-                response['code'] = ex.code
-            if ex.data is not None:
-                response['data'] = ex.data
-
-            _logger.exception(
-                "Handler raised exception: {}".format(ex.message))
-
-        except Exception:
-            http_code = 500
-            response['status'] = 'error'
-            message = "Internal server error."
-
-            if JSEND_DUMP_TRACEBACKS:
-                message += "\n" + traceback.format_exc()
-
-            response['message'] = message
-
-        try:
-            text = json.dumps(response)
-        except TypeError:
-            _logger.exception("Response serialization failed.")
-
-            return aiohttp.web.json_response(
-                data={
-                    'status': 'error',
-                    'message': "Internal server error: failed to "
-                               "JSON-serialize response."
-                },
-                status=500)
-
-        return aiohttp.web.json_response(
-            text=text,
-            status=http_code
-        )
-
-    return wrapper
 
 
 class Server:
