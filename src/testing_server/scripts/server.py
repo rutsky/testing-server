@@ -58,14 +58,21 @@ def _setup_sentry(*, loop):
     prev_loop_exception_handler = loop.get_exception_handler()
 
     def loop_exception_handler(loop, context):
-        sentry_client.captureMessage(
-            "Event loop caught unhandled exception: {}".format(
-                context['message']),
-            extra=context
-        )
+        if 'exception' in context:
+            exc = context['exception']
+            exc_info = (type(exc), exc, exc.__traceback__)
+            sentry_client.captureException(exc_info, extra=context)
+        else:
+            sentry_client.captureMessage(
+                "Event loop caught unhandled exception: {}".format(
+                    context['message']),
+                extra=context
+            )
 
         if prev_loop_exception_handler is not None:
             return prev_loop_exception_handler(loop, context)
+
+    loop.set_exception_handler(loop_exception_handler)
 
 
 JSEND_DUMP_TRACEBACKS = True
