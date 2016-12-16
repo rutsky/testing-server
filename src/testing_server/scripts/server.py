@@ -18,6 +18,7 @@ from raven.handlers.logging import SentryHandler
 from testing_server import __version__ as PROJECT_VERSION
 from testing_server import abc
 from testing_server.credentials_checker import HtpasswdCredentialsChecker
+from testing_server.token_provider import JWTTokenProvider
 
 __all__ = ('Server', 'main')
 
@@ -167,11 +168,14 @@ def jsend_handler(handler):
 class Server:
     def __init__(self,
                  app,
-                 credentials_checker: abc.AbstractCredentialsChecker, *,
+                 credentials_checker: abc.AbstractCredentialsChecker,
+                 token_provider: abc.AbstractTokenProvider,
+                 *,
                  loop,
                  enable_cors=False):
         self._app = app
         self._credentials_checker = credentials_checker
+        self._token_provider = token_provider
         self._loop = loop
         self._enable_cors = enable_cors
 
@@ -242,21 +246,27 @@ class Server:
 
         valid = await self._credentials_checker.check_password(login, password)
         if not valid:
+            logging.info("Authentication failed for user {!r}".format(login))
             raise JSendFail(
                 "Your user name and password don't match.",
                 http_code=400)
+        else:
+            logging.info("Authentication succeed for user {!r}".format(login))
 
-        return "token"
+        token = (await self._token_provider.generate_token(login)).decode()
+
+        return token
 
     @jsend_handler
     async def handler_not_implemented(self, request):
         raise JSendFail("Not implemented")
 
 
-def run_server(hostname, port, htpasswd, *, enable_cors=False):
+def run_server(hostname, port, htpasswd, token_secret, *, enable_cors=False):
     shutdown_timeout = 10
 
     credentials_checker = HtpasswdCredentialsChecker(htpasswd)
+    token_provider = JWTTokenProvider(token_secret)
 
     loop = asyncio.get_event_loop()
     asyncio.set_event_loop(None)
@@ -270,9 +280,12 @@ def run_server(hostname, port, htpasswd, *, enable_cors=False):
         app = aiohttp.web.Application(loop=loop)
 
         # Start application server.
-        app_server = Server(app, credentials_checker,
-                            loop=loop,
-                            enable_cors=enable_cors)
+        app_server = Server(
+            app,
+            credentials_checker,
+            token_provider,
+            loop=loop,
+            enable_cors=enable_cors)
         loop.run_until_complete(app_server.start())
 
         handler = app.make_handler()
@@ -335,14 +348,23 @@ def main():
         help="Allow API methods to be access from all origins according to "
              "CORS specification."
     )
+    parser.add_argument(
+        "--token-secret",
+        required=True,
+        help="Secret used for token generation."
+    )
 
     args = parser.parse_args()
 
     _setup_logging(args.log_level)
 
     try:
-        return run_server(args.hostname, args.port, args.htpasswd,
-                          enable_cors=args.enable_cors)
+        return run_server(
+            args.hostname,
+            args.port,
+            args.htpasswd,
+            args.token_secret,
+            enable_cors=args.enable_cors)
 
     except Exception:
         _logger.exception("Server failed")

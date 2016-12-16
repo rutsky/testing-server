@@ -44,6 +44,7 @@ setup(
         'aiohttp',
         'aiohttp-cors',
         'passlib',
+        'pyjwt',
         'raven',
         'raven-aiohttp',
         'yarl',
