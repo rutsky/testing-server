@@ -3,6 +3,7 @@ import logging
 
 import jwt
 
+import testing_server
 from .abc import AbstractTokenProvider
 
 __all__ = ("JWTTokenProvider",)
@@ -20,10 +21,12 @@ class JWTTokenProvider(AbstractTokenProvider):
         self._token_expire_period = token_expire_period
 
     async def generate_token(self, login):
+        issuer = testing_server.__name__ + ':' + testing_server.__version__
         payload = {
             'login': login,
             'iat': datetime.datetime.utcnow(),
             'exp': datetime.datetime.now() + self._token_expire_period,
+            'iss': issuer,
         }
         return jwt.encode(payload, self._secret)
 
