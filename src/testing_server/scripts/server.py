@@ -75,7 +75,7 @@ def _setup_sentry(*, loop):
     loop.set_exception_handler(loop_exception_handler)
 
 
-JSEND_DUMP_TRACEBACKS = True
+JSEND_DUMP_TRACEBACKS = False
 
 
 class JSendError(Exception):
