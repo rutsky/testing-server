@@ -41,11 +41,7 @@ def _setup_termination(*, loop: asyncio.AbstractEventLoop):
                                 functools.partial(on_signal, signame))
 
 
-sentry_client = None
-
-
 def _setup_sentry(*, loop):
-    global sentry_client
     sentry_client = raven.Client(
         transport=functools.partial(raven_aiohttp.AioHttpTransport, loop=loop),
         release=PROJECT_VERSION
