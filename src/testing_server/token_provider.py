@@ -29,6 +29,6 @@ class JWTTokenProvider(AbstractTokenProvider):
 
     async def validate_token(self, token):
         try:
-            jwt.decode(token, self._secret)
+            return jwt.decode(token, self._secret)
         except jwt.InvalidTokenError:
             return None
