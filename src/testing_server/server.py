@@ -79,8 +79,8 @@ class Server(AuthMixin):
         return "Testing server."
 
     @jsend_handler
-    @requires_login()
-    async def get_check_token(self, request):
+    @requires_login
+    async def get_check_token(self, request, token_payload):
         return "Token is valid."
 
     @jsend_handler
