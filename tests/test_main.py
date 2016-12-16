@@ -1,15 +1,36 @@
 import asyncio
+import tempfile
+import json
+import os
 
 import pytest
 import aiohttp
 
 from testing_server.server import Server
+from testing_server.token_provider import JWTTokenProvider
+from testing_server.credentials_checker import HtpasswdCredentialsChecker
 
 
 @pytest.fixture
-def client(loop: asyncio.BaseEventLoop, test_server, test_client):
+def token_provider():
+    return JWTTokenProvider(secret='secret')
+
+
+@pytest.fixture
+def credentials_checker():
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(b'user:password\n')
+        f.flush()
+        os.fsync(f.fileno())
+
+        yield HtpasswdCredentialsChecker(f.name)
+
+
+@pytest.fixture
+def client(loop: asyncio.BaseEventLoop, test_server, test_client,
+           credentials_checker, token_provider):
     app = aiohttp.web.Application(loop=loop)
-    app_server = Server(app, loop=loop)
+    app_server = Server(app, credentials_checker, token_provider, loop=loop)
     loop.run_until_complete(app_server.start())
     server = loop.run_until_complete(test_server(app))
     client = loop.run_until_complete(test_client(server))
@@ -32,3 +53,11 @@ async def test_server_setup(client):
     resp = await client.get('/')
     data = await get_success_resp_data(resp)
     assert "Testing server" in data
+
+async def test_server_auth(client):
+    resp = await client.post(
+        '/api/login',
+        data=json.dumps(dict(login='user', password='password')),
+        headers={'Content-Type': 'application/json'})
+    data = await get_success_resp_data(resp)
+    assert data
