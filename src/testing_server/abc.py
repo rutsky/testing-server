@@ -1,4 +1,5 @@
-from abc import ABC, abstractmethod
+import asyncio
+from abc import ABC, abstractmethod, abstractproperty
 
 __all__ = ('AbstractCredentialsChecker', 'AbstractTokenProvider')
 
@@ -19,3 +20,32 @@ class AbstractTokenProvider(ABC):
     @abstractmethod
     async def validate_token(self, token):
         """Returns decoded token if it is valid, None otherwise."""
+
+
+class AbstractSubscriber(ABC):
+
+    @abstractproperty
+    def queue(self) -> asyncio.Queue:
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
+
+    @abstractmethod
+    def __enter__(self):
+        pass
+
+    @abstractmethod
+    def __exit__(self):
+        pass
+
+
+class AbstracePublisher(ABC):
+    @abstractmethod
+    def publish(self, topic, message):
+        pass
+
+    @abstractmethod
+    def subscribe(self, topic) -> AbstractSubscriber:
+        pass
