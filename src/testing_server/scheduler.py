@@ -52,4 +52,4 @@ class PeriodicScheduler:
                 else:
                     self._num_consec_errors = 0
 
-                await asyncio.sleep(self._period)
+                await asyncio.sleep(self._period, loop=self._loop)
