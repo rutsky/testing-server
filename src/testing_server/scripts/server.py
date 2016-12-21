@@ -146,7 +146,7 @@ def main():
         help="TCP/IP port to serve on (default: %(default)r)",
     )
     parser.add_argument(
-        "--htpasswd",
+        "--htpasswd-file",
         required=True,
         help="Path to htpasswd file which should be used for authentication."
     )
@@ -157,7 +157,7 @@ def main():
              "CORS specification."
     )
     parser.add_argument(
-        "--token-secret",
+        "--token-secret-file",
         required=True,
         help="Secret used for token generation."
     )
@@ -170,8 +170,8 @@ def main():
         return run_server(
             args.hostname,
             args.port,
-            args.htpasswd,
-            args.token_secret,
+            args.htpasswd_file,
+            args.token_secret_file,
             enable_cors=args.enable_cors)
 
     except Exception:
