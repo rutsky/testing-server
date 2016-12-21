@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import codecs
 
 import asyncssh
 
@@ -53,9 +54,8 @@ async def run_check(user, revision_id, solution_blob, assignment_name,
 
         ci_data = json.loads(ci_log)
 
-        # XXX
-        # import pprint
-        # pprint.pprint(ci_data)
+        #import pprint
+        #pprint.pprint(ci_data)
 
         return ci_data
 
@@ -78,12 +78,26 @@ async def check_revision(db, revision_id, *, ssh_params, loop):
     try:
         user, solution_blob = await db.get_revision_data(revision_id)
 
-        # XXX
-        # print(user, solution_blob)
+        ci_data = await run_check(
+            user, revision_id, solution_blob, assignment_name,
+            solution_name, tests_dir, common_header,
+            ssh_params=ssh_params, loop=loop)
 
-        await run_check(user, revision_id, solution_blob, assignment_name,
-                        solution_name, tests_dir, common_header,
-                        ssh_params=ssh_params, loop=loop)
+        async def decode(base64_field):
+            if not base64_field:
+                return None
+            return await db.store_blob(
+                codecs.decode(base64_field.encode(), 'base64'))
+
+        ci_data['common_header_contents'] = await decode(
+            ci_data['common_header_contents'])
+
+        for test in ci_data['smoke_tests']['tests']:
+            for test_part in test[1]:
+                test_part[3] = await decode(test_part[3])
+            test[2] = await decode(test[2])
+
+        await db.set_revision_check_result(revision_id, ci_data)
 
     except:
         await db.set_revision_state(revision_id, 'failed')

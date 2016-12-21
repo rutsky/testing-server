@@ -1,5 +1,6 @@
 import logging
 import hashlib
+import json
 
 from aiopg.sa import create_engine
 
@@ -75,44 +76,11 @@ class Revisions(Base):
         'solution_id', String, ForeignKey('blobs.id'),
         nullable=False)
     commit_message = Column(String, nullable=True)
-    # 'new', 'checking', 'checked', 'reported'
+    # 'obsolete', 'new', 'checking', 'checked', 'reported'
     state = Column(String, nullable=False)
 
-
-class TestRuns(Base):
-    __tablename__ = 'test_runs'
-
-    id = Column(Integer, primary_key=True)
-    revison_id = Column(
-        'revision_id', Integer, ForeignKey('revisions.id'), nullable=False)
-    # 'obsolete', 'running', 'done', 'reported'
-    state = Column(String, nullable=False)
-
-
-class SingleTest(Base):
-    __tablename__ = 'single_test'
-
-    id = Column(Integer, primary_key=True)
-    test_name = Column(String, nullable=False)
-    test_source_id = Column(
-        'test_source_id', String, ForeignKey('blobs.id'),
-        nullable=False)
-    test_common_header_id = Column(
-        'test_common_header_id', String, ForeignKey('blobs.id'),
-        nullable=False)
-
-
-class SingleTestPart(Base):
-    __tablename__ = 'single_test_part'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    status = Column(Integer, nullable=False)
-    info = Column(String)
-    log_id = Column(
-        'log_id', String, ForeignKey('blobs.id'),
-        nullable=True)
-
+    # TODO: store normalized or as JSON field.
+    check_result = Column(String, nullable=True)
 
 assignments_tbl = Assignments.__table__
 tickets_tbl = Tickets.__table__
@@ -246,6 +214,25 @@ class Database(AbstractDatabase):
             _logger.debug("Update SQL statement {}".format(stmt))
             await conn.execute(stmt)
 
+    async def get_revision_check_result(self, id):
+        async with self.engine.acquire() as conn:
+            stmt = sqlalchemy.select(
+                [revisions_tbl.c.check_result]
+            ).where(
+                revisions_tbl.c.id == id
+            )
+            return json.loads(await conn.scalar(stmt))
+
+    async def set_revision_check_result(self, id, check_result):
+        async with self.engine.acquire() as conn:
+            stmt = revisions_tbl.update().values(
+                check_result=json.dumps(check_result)
+            ).where(
+                revisions_tbl.c.id == id
+            )
+            _logger.debug("Update SQL statement {}".format(stmt))
+            await conn.execute(stmt)
+
     async def get_revision_data(self, id):
         join_stmt = sqlalchemy.join(
             revisions_tbl, blobs_tbl,
@@ -346,7 +333,10 @@ class Database(AbstractDatabase):
         for solution in reversed(solutions):
             if solution.user in users:
                 # This user has newer solution.
+                if solution.state != 'obsolete':
+                    await self.set_revision_state(solution.id, 'obsolete')
                 continue
+
             else:
                 rev_solutions.append(solution)
                 users.add(solution.user)
