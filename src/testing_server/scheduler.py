@@ -11,6 +11,8 @@ class PeriodicScheduler:
 
     def __init__(self, coro, period, *,
                  start_immediately=True, max_consec_errors=20, loop):
+        assert asyncio.iscoroutinefunction(coro)
+
         self._loop = loop
         self._coro = coro
         self._period = period
