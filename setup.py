@@ -44,6 +44,7 @@ setup(
         'aiohttp',
         'aiohttp-cors',
         'async-timeout',
+        'configargparse',
         'passlib',
         'pyjwt',
         'raven',

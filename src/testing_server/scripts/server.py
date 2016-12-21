@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import contextlib
 import functools
@@ -6,6 +5,7 @@ import logging
 import signal
 import sys
 
+import configargparse
 import aiohttp.web
 import raven
 import raven_aiohttp
@@ -124,7 +124,9 @@ def run_server(hostname, port, htpasswd, token_secret, *, enable_cors=False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Testing server")
+    parser = configargparse.ArgumentParser(
+        description="Testing server",
+        auto_env_var_prefix="TESTING_SERVER_")
     parser.add_argument(
         "-l",
         dest="log_level",
