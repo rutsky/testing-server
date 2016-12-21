@@ -75,6 +75,8 @@ class Revisions(Base):
         'solution_id', String, ForeignKey('blobs.id'),
         nullable=False)
     commit_message = Column(String, nullable=True)
+    # 'new', 'checking', 'checked', 'reported'
+    state = Column(String, nullable=False)
 
 
 class TestRuns(Base):
@@ -83,7 +85,7 @@ class TestRuns(Base):
     id = Column(Integer, primary_key=True)
     revison_id = Column(
         'revision_id', Integer, ForeignKey('revisions.id'), nullable=False)
-    # 'running', 'done', 'reported'
+    # 'obsolete', 'running', 'done', 'reported'
     state = Column(String, nullable=False)
 
 
@@ -210,10 +212,61 @@ class Database(AbstractDatabase):
                 id, user, assignment_id, solution_id, msg))
             stmt = revisions_tbl.insert().values(
                 id=id, user=user, assignment_id=assignment_id,
-                solution_id=solution_id, commit_message=msg)
+                solution_id=solution_id, commit_message=msg,
+                state='new')
             _logger.debug("Insert SQL statement {}".format(
                 stmt))
             await conn.execute(stmt)
+
+    async def reset_revision_checking_state(self):
+        stmt = revisions_tbl.update().values(
+            state='failed'
+        ).where(
+            revisions_tbl.c.state == 'checking'
+        )
+        async with self.engine.acquire() as conn:
+            await conn.execute(stmt)
+
+    async def get_revision_state(self, id):
+        async with self.engine.acquire() as conn:
+            stmt = sqlalchemy.select(
+                [revisions_tbl.c.state]
+            ).where(
+                revisions_tbl.c.id == id
+            )
+            return await conn.scalar(stmt)
+
+    async def set_revision_state(self, id, state):
+        async with self.engine.acquire() as conn:
+            stmt = revisions_tbl.update().values(
+                state=state
+            ).where(
+                revisions_tbl.c.id == id
+            )
+            _logger.debug("Update SQL statement {}".format(stmt))
+            await conn.execute(stmt)
+
+    async def get_revision_data(self, id):
+        join_stmt = sqlalchemy.join(
+            revisions_tbl, blobs_tbl,
+            (revisions_tbl.c.solution_id == blobs_tbl.c.id))
+
+        stmt = sqlalchemy.select(
+            [revisions_tbl.c.user, blobs_tbl.c.blob]
+        ).where(
+            revisions_tbl.c.id == id
+        ).select_from(
+            join_stmt
+        )
+
+        async with self.engine.acquire() as conn:
+            rows = []
+            async for row in conn.execute(stmt):
+                rows.append(row)
+
+        assert len(rows) == 1
+
+        return rows[0][0], rows[0][1]
 
     async def store_blob(self, data):
         hash = hashlib.sha256()
@@ -256,3 +309,47 @@ class Database(AbstractDatabase):
         _logger.debug("Users with ticket for course {!r}, assignment {!r}: "
                       "{!r}".format(course, assignment, users))
         return users
+
+    async def get_checkable_solutions(self, assignment_id):
+        join_stmt = sqlalchemy.join(
+            tickets_tbl, revisions_tbl,
+            (tickets_tbl.c.user == revisions_tbl.c.user) &
+            (tickets_tbl.c.assignment_id == revisions_tbl.c.assignment_id))
+
+        stmt = sqlalchemy.select(
+            [revisions_tbl.c.id, revisions_tbl.c.user,
+             revisions_tbl.c.solution_id, revisions_tbl.c.commit_message,
+             tickets_tbl.c.id.label('ticket_id'), revisions_tbl.c.state]
+        ).select_from(
+            join_stmt
+        ).where(
+            (tickets_tbl.c.assignment_id == assignment_id) &
+            ((revisions_tbl.c.state == 'new') |
+             (revisions_tbl.c.state == 'failed'))
+        ).order_by(
+            revisions_tbl.c.id
+        )
+
+        _logger.debug("Getting list of solutions that may be checked. "
+                      "SQL: {}".format(stmt))
+
+        async with self.engine.acquire() as conn:
+            solutions = []
+            async for row in conn.execute(stmt):
+                solutions.append(row)
+
+        _logger.debug("Checkable solutions:\n{!r}".format(solutions))
+
+        rev_solutions = []
+        users = set()
+        for solution in reversed(solutions):
+            if solution.user in users:
+                # This user has newer solution.
+                continue
+            else:
+                rev_solutions.append(solution)
+                users.add(solution.user)
+        solutions = list(reversed(rev_solutions))
+        solutions.sort(key=lambda x: x.state == 'failed')
+
+        return [solution.id for solution in solutions]
