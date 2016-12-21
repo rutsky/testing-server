@@ -255,6 +255,21 @@ class Database(AbstractDatabase):
 
         return rows[0][0], rows[0][1]
 
+    async def get_blob(self, blob_id):
+        stmt = sqlalchemy.select(
+            [blobs_tbl.c.blob]
+        ).where(blobs_tbl.c.id == blob_id)
+
+        async with self.engine.acquire() as conn:
+            rows = []
+            async for row in conn.execute(stmt):
+                rows.append(row)
+
+            if rows:
+                return rows[0].blob
+            else:
+                return None
+
     async def store_blob(self, data):
         hash = hashlib.sha256()
         hash.update(data)

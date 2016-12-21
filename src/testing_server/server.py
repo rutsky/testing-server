@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import json
+import mimetypes
 
 import aiohttp
 import aiohttp.hdrs
@@ -27,6 +28,7 @@ class Server(AuthMixin):
                  app,
                  credentials_checker: abc.AbstractCredentialsChecker,
                  token_provider: abc.AbstractTokenProvider,
+                 db: abc.AbstractDatabase,
                  *,
                  loop,
                  enable_cors=False):
@@ -34,10 +36,13 @@ class Server(AuthMixin):
 
         self._app = app
         self._credentials_checker = credentials_checker
+        self._db = db
         self._loop = loop
         self._enable_cors = enable_cors
 
         self._websockets = set()
+
+        mimetypes.init()
 
     async def start(self):
         if self._enable_cors:
@@ -64,6 +69,11 @@ class Server(AuthMixin):
 
         self._app.router.add_get(
             api_prefix + '/ws', self.get_ws)
+
+        self._app.router.add_get(
+            api_prefix +
+            '/blobs/{blob_id}/{task_name}/{user}/{revision}/{name}',
+            self.get_blob)
 
         self._app.router.add_get(
             '/users', self.handler_not_implemented)
@@ -96,6 +106,20 @@ class Server(AuthMixin):
     @jsend_handler
     async def get_default(self, request):
         return "Testing server."
+
+    async def get_blob(self, request):
+        blob_id = request.match_info['blob_id']
+
+        blob = await self._db.get_blob(blob_id)
+        if blob is None:
+            raise web.HTTPNotFound
+
+        name = request.match_info['name']
+        content_type, _ = mimetypes.guess_type(name)
+        if content_type is None:
+            content_type = 'text/plain'
+
+        return web.Response(body=blob, content_type=content_type)
 
     @jsend_handler
     @requires_login

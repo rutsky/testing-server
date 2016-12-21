@@ -132,7 +132,7 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
             loop.run_until_complete(
                 db.get_checkable_solutions(LINKED_PTR_ASSIGNMENT_ID))
             return
-        if True:
+        if False:
             loop.run_until_complete(
                 check_solutions(db, LINKED_PTR_ASSIGNMENT_ID,
                                 ssh_params=worker_ssh_params, loop=loop))
@@ -158,6 +158,7 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
             app,
             credentials_checker,
             token_provider,
+            db,
             loop=loop,
             enable_cors=enable_cors)
         loop.run_until_complete(app_server.start())
