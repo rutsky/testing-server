@@ -50,6 +50,7 @@ setup(
         'pyjwt',
         'raven',
         'raven-aiohttp',
+        'sqlalchemy',
         'yarl',
     ],
     extras_require={
