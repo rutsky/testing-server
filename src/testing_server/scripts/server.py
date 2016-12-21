@@ -21,6 +21,7 @@ from testing_server.db import (
     Database, LINKED_PTR_ASSIGNMENT_ID, LINKED_PTR_PATH)
 from testing_server.trac import sync_tickets
 from testing_server.svn import sync_svn
+from testing_server.scheduler import PeriodicScheduler
 
 __all__ = ('main',)
 
@@ -109,18 +110,31 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
         trac_rpc = ServerProxy(trac_xmlrpc_uri, loop=loop)
         exit_stack.callback(trac_rpc.close)
 
-        if _DEBUG_SYNC_TICKETS:
-            loop.run_until_complete(sync_tickets(
-                db, trac_rpc, {'HA#3 linked_ptr': LINKED_PTR_ASSIGNMENT_ID}))
+        async def do_tickets_sync():
+            await sync_tickets(
+                db, trac_rpc, {'HA#3 linked_ptr': LINKED_PTR_ASSIGNMENT_ID})
 
-        if _DEBUG_SYNC_SVN:
-            loop.run_until_complete(sync_svn(
+        async def do_svn_sync():
+            await sync_svn(
                 db,
                 {LINKED_PTR_PATH: LINKED_PTR_ASSIGNMENT_ID},
                 svn_uri=svn_uri,
                 svn_username=svn_username,
                 svn_password=svn_password,
-                loop=loop))
+                loop=loop)
+
+        if _DEBUG_SYNC_TICKETS:
+            loop.run_until_complete(do_tickets_sync())
+        if _DEBUG_SYNC_SVN:
+            loop.run_until_complete(do_svn_sync())
+
+        svn_sync = PeriodicScheduler(do_svn_sync, 30, loop=loop)
+        loop.run_until_complete(svn_sync.start())
+        exit_stack.callback(lambda: loop.run_until_complete(svn_sync.stop()))
+
+        trac_sync = PeriodicScheduler(do_tickets_sync, 600, loop=loop)
+        loop.run_until_complete(trac_sync.start())
+        exit_stack.callback(lambda: loop.run_until_complete(trac_sync.stop()))
 
         app = aiohttp.web.Application(loop=loop)
 
