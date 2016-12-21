@@ -11,10 +11,12 @@ import raven
 import raven_aiohttp
 import yarl
 from raven.handlers.logging import SentryHandler
+
 from testing_server import __version__ as PROJECT_VERSION
 from testing_server.credentials_checker import HtpasswdCredentialsChecker
 from testing_server.server import Server
 from testing_server.token_provider import JWTTokenProvider
+from testing_server.db import Database
 
 __all__ = ('main',)
 
@@ -68,7 +70,8 @@ def _setup_sentry(*, loop):
     loop.set_exception_handler(loop_exception_handler)
 
 
-def run_server(hostname, port, htpasswd, token_secret, *, enable_cors=False):
+def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
+               *, enable_cors=False):
     shutdown_timeout = 10
 
     credentials_checker = HtpasswdCredentialsChecker(htpasswd)
@@ -82,6 +85,11 @@ def run_server(hostname, port, htpasswd, token_secret, *, enable_cors=False):
 
     with contextlib.ExitStack() as exit_stack:
         exit_stack.callback(loop.close)
+
+        db = Database(postgres_uri, loop=loop)
+        loop.run_until_complete(db.start())
+        exit_stack.callback(
+            lambda: loop.run_until_complete(db.stop()))
 
         app = aiohttp.web.Application(loop=loop)
 
@@ -161,6 +169,11 @@ def main():
         required=True,
         help="Secret used for token generation."
     )
+    parser.add_argument(
+        "--postgres-uri",
+        required=True,
+        help="libpq connection string for PostgreSQL."
+    )
 
     args = parser.parse_args()
 
@@ -172,6 +185,7 @@ def main():
             args.port,
             args.htpasswd_file,
             args.token_secret_file,
+            args.postgres_uri,
             enable_cors=args.enable_cors)
 
     except Exception:

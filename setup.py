@@ -43,6 +43,7 @@ setup(
     install_requires=[
         'aiohttp',
         'aiohttp-cors',
+        'aiopg',
         'async-timeout',
         'configargparse',
         'passlib',

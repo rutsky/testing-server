@@ -49,3 +49,7 @@ class AbstracePublisher(ABC):
     @abstractmethod
     def subscribe(self, topic) -> AbstractSubscriber:
         pass
+
+
+class AbstractDatabase(ABC):
+    pass
