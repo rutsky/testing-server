@@ -3,25 +3,24 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-async def sync_ticket(db, trac_rpc, ticket_id, component_to_assignment):
+async def sync_ticket(db, trac_rpc, ticket_id, component_to_assignment_id):
     attributes = (await trac_rpc.ticket.get(ticket_id))[3]
 
     component = attributes['component']
 
-    if component not in component_to_assignment:
+    if component not in component_to_assignment_id:
         return False
 
-    course, assignment = component_to_assignment[component]
+    assignment_id = component_to_assignment_id[component]
     user = attributes['reporter']
 
-    _logger.debug("Syncing {!r}".format((course, user, assignment, ticket_id)))
+    _logger.debug("Syncing {!r}".format((ticket_id, assignment_id, user)))
 
-    await db.create_ticket_if_doesnt_exists(
-        course, user, assignment, ticket_id)
+    await db.update_ticket(ticket_id, assignment_id, user)
 
     return True
 
-async def sync_tickets(db, trac_rpc, component_to_assignment):
+async def sync_tickets(db, trac_rpc, component_to_assignment_id):
     try:
         _logger.info("Tickets sync started")
 
@@ -32,7 +31,8 @@ async def sync_tickets(db, trac_rpc, component_to_assignment):
         _logger.info("Trac has {} tickets".format(len(tickets_ids)))
 
         for ticket_id in tickets_ids:
-            await sync_ticket(db, trac_rpc, ticket_id, component_to_assignment)
+            await sync_ticket(db, trac_rpc, ticket_id,
+                              component_to_assignment_id)
 
     finally:
         _logger.info("Tickets sync finished")

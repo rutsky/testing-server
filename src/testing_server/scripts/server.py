@@ -17,8 +17,10 @@ from testing_server import __version__ as PROJECT_VERSION
 from testing_server.credentials_checker import HtpasswdCredentialsChecker
 from testing_server.server import Server
 from testing_server.token_provider import JWTTokenProvider
-from testing_server.db import Database
+from testing_server.db import (
+    Database, LINKED_PTR_ASSIGNMENT_ID, LINKED_PTR_PATH)
 from testing_server.trac import sync_tickets
+from testing_server.svn import sync_svn
 
 __all__ = ('main',)
 
@@ -26,6 +28,7 @@ __all__ = ('main',)
 _logger = logging.getLogger(__name__)
 
 _DEBUG_SYNC_TICKETS = False
+_DEBUG_SYNC_SVN = False
 
 
 def _setup_logging(level=logging.DEBUG):
@@ -76,7 +79,11 @@ def _setup_sentry(*, loop):
 
 def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
                trac_xmlrpc_uri,
-               *, enable_cors=False):
+               *,
+               svn_uri,
+               svn_username=None,
+               svn_password=None,
+               enable_cors=False):
     shutdown_timeout = 10
 
     credentials_checker = HtpasswdCredentialsChecker(htpasswd)
@@ -84,6 +91,9 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
 
     loop = asyncio.get_event_loop()
     asyncio.set_event_loop(None)
+    # See <https://github.com/python/asyncio/issues/478#issuecomment-268476438>
+    # for details.
+    asyncio.get_child_watcher().attach_loop(loop)
 
     _setup_termination(loop=loop)
     _setup_sentry(loop=loop)
@@ -101,7 +111,16 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
 
         if _DEBUG_SYNC_TICKETS:
             loop.run_until_complete(sync_tickets(
-                db, trac_rpc, {'HA#3 linked_ptr': ('cpp16', 'linked_ptr')}))
+                db, trac_rpc, {'HA#3 linked_ptr': LINKED_PTR_ASSIGNMENT_ID}))
+
+        if _DEBUG_SYNC_SVN:
+            loop.run_until_complete(sync_svn(
+                db,
+                {LINKED_PTR_PATH: LINKED_PTR_ASSIGNMENT_ID},
+                svn_uri=svn_uri,
+                svn_username=svn_username,
+                svn_password=svn_password,
+                loop=loop))
 
         app = aiohttp.web.Application(loop=loop)
 
@@ -191,6 +210,19 @@ def main():
         required=True,
         help="XMLRPC Trac endpoint with authorization information."
     )
+    parser.add_argument(
+        "--svn-uri",
+        required=True,
+        help="Subversion URI."
+    )
+    parser.add_argument(
+        "--svn-username",
+        help="Subversion username (if needed)."
+    )
+    parser.add_argument(
+        "--svn-password",
+        help="Subversion username (if needed)."
+    )
 
     args = parser.parse_args()
 
@@ -204,6 +236,9 @@ def main():
             args.token_secret_file,
             args.postgres_uri,
             args.trac_xmlrpc_uri,
+            svn_uri=args.svn_uri,
+            svn_username=args.svn_username,
+            svn_password=args.svn_password,
             enable_cors=args.enable_cors)
 
     except Exception:
