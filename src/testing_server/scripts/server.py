@@ -88,6 +88,7 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
                svn_uri,
                svn_username=None,
                svn_password=None,
+               worker_ssh_params,
                enable_cors=False):
     shutdown_timeout = 10
 
@@ -133,7 +134,8 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
             return
         if True:
             loop.run_until_complete(
-                check_solutions(db, LINKED_PTR_ASSIGNMENT_ID, loop=loop))
+                check_solutions(db, LINKED_PTR_ASSIGNMENT_ID,
+                                ssh_params=worker_ssh_params, loop=loop))
             return
 
         if _DEBUG_SYNC_TICKETS:
@@ -248,7 +250,19 @@ def main():
     )
     parser.add_argument(
         "--svn-password",
-        help="Subversion username (if needed)."
+        help="Subversion password (if needed)."
+    )
+    parser.add_argument(
+        "--worker-ssh-host",
+    )
+    parser.add_argument(
+        "--worker-ssh-username",
+    )
+    parser.add_argument(
+        "--worker-ssh-known-hosts-file",
+    )
+    parser.add_argument(
+        "--worker-ssh-key",
     )
 
     args = parser.parse_args()
@@ -266,6 +280,12 @@ def main():
             svn_uri=args.svn_uri,
             svn_username=args.svn_username,
             svn_password=args.svn_password,
+            worker_ssh_params=dict(
+                host=args.worker_ssh_host,
+                username=args.worker_ssh_username,
+                known_hosts=args.worker_ssh_known_hosts_file,
+                client_keys=[args.worker_ssh_key],
+            ),
             enable_cors=args.enable_cors)
 
     except Exception:

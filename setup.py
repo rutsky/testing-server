@@ -45,6 +45,7 @@ setup(
         'aiohttp-cors',
         'aiopg',
         'async-timeout',
+        'asyncssh',
         'aioxmlrpc',
         'configargparse',
         'passlib',

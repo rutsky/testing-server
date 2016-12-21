@@ -323,9 +323,10 @@ class Database(AbstractDatabase):
         ).select_from(
             join_stmt
         ).where(
-            (tickets_tbl.c.assignment_id == assignment_id) &
-            ((revisions_tbl.c.state == 'new') |
-             (revisions_tbl.c.state == 'failed'))
+            (tickets_tbl.c.assignment_id == assignment_id)
+            #&
+            #((revisions_tbl.c.state == 'new') |
+            # (revisions_tbl.c.state == 'failed'))
         ).order_by(
             revisions_tbl.c.id
         )
@@ -350,6 +351,7 @@ class Database(AbstractDatabase):
                 rev_solutions.append(solution)
                 users.add(solution.user)
         solutions = list(reversed(rev_solutions))
+        solutions = [s for s in solutions if s.state in ('new', 'failed')]
         solutions.sort(key=lambda x: x.state == 'failed')
 
         return [solution.id for solution in solutions]
