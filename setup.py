@@ -43,7 +43,7 @@ setup(
     install_requires=[
         'aiohttp',
         'aiohttp-cors',
-        'async-timeout'
+        'async-timeout',
         'passlib',
         'pyjwt',
         'raven',
