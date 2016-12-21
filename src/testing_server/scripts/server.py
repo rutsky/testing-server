@@ -11,17 +11,21 @@ import raven
 import raven_aiohttp
 import yarl
 from raven.handlers.logging import SentryHandler
+from aioxmlrpc.client import ServerProxy
 
 from testing_server import __version__ as PROJECT_VERSION
 from testing_server.credentials_checker import HtpasswdCredentialsChecker
 from testing_server.server import Server
 from testing_server.token_provider import JWTTokenProvider
 from testing_server.db import Database
+from testing_server.trac import sync_tickets
 
 __all__ = ('main',)
 
 
 _logger = logging.getLogger(__name__)
+
+_DEBUG_SYNC_TICKETS = False
 
 
 def _setup_logging(level=logging.DEBUG):
@@ -71,6 +75,7 @@ def _setup_sentry(*, loop):
 
 
 def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
+               trac_xmlrpc_uri,
                *, enable_cors=False):
     shutdown_timeout = 10
 
@@ -90,6 +95,13 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
         loop.run_until_complete(db.start())
         exit_stack.callback(
             lambda: loop.run_until_complete(db.stop()))
+
+        trac_rpc = ServerProxy(trac_xmlrpc_uri, loop=loop)
+        exit_stack.callback(trac_rpc.close)
+
+        if _DEBUG_SYNC_TICKETS:
+            loop.run_until_complete(sync_tickets(
+                db, trac_rpc, {'HA#3 linked_ptr': ('cpp16', 'linked_ptr')}))
 
         app = aiohttp.web.Application(loop=loop)
 
@@ -174,6 +186,11 @@ def main():
         required=True,
         help="libpq connection string for PostgreSQL."
     )
+    parser.add_argument(
+        "--trac-xmlrpc-uri",
+        required=True,
+        help="XMLRPC Trac endpoint with authorization information."
+    )
 
     args = parser.parse_args()
 
@@ -186,6 +203,7 @@ def main():
             args.htpasswd_file,
             args.token_secret_file,
             args.postgres_uri,
+            args.trac_xmlrpc_uri,
             enable_cors=args.enable_cors)
 
     except Exception:

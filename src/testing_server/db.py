@@ -1,8 +1,7 @@
-import aiopg
 from aiopg.sa import create_engine
-import sqlalchemy as sa
 from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.dialects.postgresql import insert
 
 from .abc import AbstractDatabase
 
@@ -104,29 +103,43 @@ class Database(AbstractDatabase):
     def __init__(self, dsn, *, loop):
         self._dsn = dsn
         self._loop = loop
-        self._pool = None
+        self._engine = None
 
     @property
-    def pool(self):
-        assert self._pool is not None
-        return self._pool
+    def engine(self):
+        assert self._engine is not None
+        return self._engine
 
     async def start(self):
-        self._pool = await aiopg.create_pool(self._dsn, loop=self._loop)
+        self._engine = await create_engine(self._dsn, loop=self._loop)
 
         if _DEBUG_DROP_SCHEMA:
-            async with self.pool.acquire() as conn:
+            async with self.engine.acquire() as conn:
                 async with conn.cursor() as cur:
                     sql = gen_drop_sql(Base.metadata)
                     await cur.execute(sql)
 
         if _DEBUG_CREATE_SCHEMA:
-            async with self.pool.acquire() as conn:
+            async with self.engine.acquire() as conn:
                 async with conn.cursor() as cur:
                     sql = gen_create_sql(Base.metadata)
                     await cur.execute(sql)
 
     async def stop(self):
-        self._pool.terminate()
-        await self._pool.wait_closed()
-        self._pool = None
+        self._engine.terminate()
+        await self._engine.wait_closed()
+        self._engine = None
+
+    async def create_ticket_if_doesnt_exists(
+            self, course, user, assignment, trac_ticket_id):
+        async with self.engine.acquire() as conn:
+            print(course, user, assignment, trac_ticket_id)
+
+            stmt = insert(Tickets.__table__).values(
+                id=trac_ticket_id,
+                course=course,
+                user=user,
+                assignment=assignment
+            ).on_conflict_do_nothing(index_elements=['id'])
+
+            await conn.execute(stmt)
