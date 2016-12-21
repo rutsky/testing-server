@@ -36,6 +36,9 @@ def _setup_logging(level=logging.DEBUG):
     format_string = '%(asctime)-15s %(name)s %(levelname)s: %(message)s'
     logging.basicConfig(format=format_string, level=level)
 
+    # Asyncio is too spammy.
+    logging.getLogger('asyncio').setLevel(logging.WARNING)
+
 
 def _setup_termination(*, loop: asyncio.AbstractEventLoop):
     def on_signal(signame):
