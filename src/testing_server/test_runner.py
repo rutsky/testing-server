@@ -96,6 +96,10 @@ async def check_revision(db, revision_id, *, ssh_params, loop):
             for test_part in test[1]:
                 test_part[3] = await decode(test_part[3])
             test[2] = await decode(test[2])
+        for test in ci_data['tests']['tests']:
+            for test_part in test[1]:
+                test_part[3] = await decode(test_part[3])
+            test[2] = await decode(test[2])
 
         await db.set_revision_check_result(revision_id, ci_data)
 

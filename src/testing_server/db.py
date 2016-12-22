@@ -233,6 +233,21 @@ class Database(AbstractDatabase):
             _logger.debug("Update SQL statement {}".format(stmt))
             await conn.execute(stmt)
 
+    async def get_revision_user(self, id):
+        stmt = sqlalchemy.select(
+            [revisions_tbl.c.user]
+        ).where(revisions_tbl.c.id == id)
+
+        async with self.engine.acquire() as conn:
+            rows = []
+            async for row in conn.execute(stmt):
+                rows.append(row)
+
+        if rows:
+            return rows[0].user
+        else:
+            return None
+
     async def get_revision_data(self, id):
         join_stmt = sqlalchemy.join(
             revisions_tbl, blobs_tbl,
@@ -360,3 +375,34 @@ class Database(AbstractDatabase):
         solutions.sort(key=lambda x: x.state == 'failed')
 
         return [solution.id for solution in solutions]
+
+    async def get_reportable_solutions(self, assignment_id):
+        join_stmt = sqlalchemy.join(
+            tickets_tbl, revisions_tbl,
+            (tickets_tbl.c.user == revisions_tbl.c.user) &
+            (tickets_tbl.c.assignment_id == revisions_tbl.c.assignment_id))
+
+        stmt = sqlalchemy.select(
+            [revisions_tbl.c.id, revisions_tbl.c.user,
+             revisions_tbl.c.solution_id, revisions_tbl.c.commit_message,
+             tickets_tbl.c.id.label('ticket_id'), revisions_tbl.c.state]
+        ).select_from(
+            join_stmt
+        ).where(
+            (tickets_tbl.c.assignment_id == assignment_id) &
+            (revisions_tbl.c.state == 'checked')
+        ).order_by(
+            revisions_tbl.c.id
+        )
+
+        _logger.debug("Getting list of solutions which state can be reported. "
+                      "SQL: {}".format(stmt))
+
+        async with self.engine.acquire() as conn:
+            solutions = []
+            async for row in conn.execute(stmt):
+                solutions.append(row)
+
+        _logger.debug("Reportable solutions:\n{!r}".format(solutions))
+
+        return [(solution.id, solution.ticket_id) for solution in solutions]

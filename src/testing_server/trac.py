@@ -20,6 +20,7 @@ async def sync_ticket(db, trac_rpc, ticket_id, component_to_assignment_id):
 
     return True
 
+
 async def sync_tickets(db, trac_rpc, component_to_assignment_id):
     try:
         _logger.info("Tickets sync started")

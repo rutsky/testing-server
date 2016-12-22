@@ -23,6 +23,7 @@ from testing_server.trac import sync_tickets
 from testing_server.svn import sync_svn
 from testing_server.scheduler import PeriodicScheduler
 from testing_server.test_runner import check_solutions
+from testing_server.trac_reporter import report_solutions
 
 __all__ = ('main',)
 
@@ -136,6 +137,11 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
             loop.run_until_complete(
                 check_solutions(db, LINKED_PTR_ASSIGNMENT_ID,
                                 ssh_params=worker_ssh_params, loop=loop))
+            return
+        if True:
+            loop.run_until_complete(
+                report_solutions(db, trac_rpc, LINKED_PTR_ASSIGNMENT_ID,
+                                 loop=loop))
             return
 
         if _DEBUG_SYNC_TICKETS:
