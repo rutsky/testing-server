@@ -37,12 +37,22 @@ def format_tests(build_url, tests):
         test_file_name = pathlib.Path(test_file_name)
         test_name = test_file_name.name
 
-        res += textwrap.dedent("""\
-        {{{{{{#!td rowspan={num_stages}
-        {uri}
-        }}}}}}
-        """).format(
-            uri=build_url(test_source, test_name), num_stages=len(stages))
+        successfull_test = all([s[1] == 0 for s in stages])
+
+        if not successfull_test:
+            res += textwrap.dedent("""\
+            {{{{{{#!td rowspan={num_stages}
+            {uri}
+            }}}}}}
+            """).format(
+                uri=build_url(test_source, test_name), num_stages=len(stages))
+        else:
+            res += textwrap.dedent("""\
+            {{{{{{#!td rowspan={num_stages}
+            {test_name}
+            }}}}}}
+            """).format(
+                test_name=test_name, num_stages=len(stages))
 
         for stage_name, status, info, log_id in stages:
             log_value = ""
