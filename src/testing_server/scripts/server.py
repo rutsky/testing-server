@@ -159,19 +159,31 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
         if _DEBUG_SYNC_SVN:
             loop.run_until_complete(do_svn_sync())
 
-        svn_sync = PeriodicScheduler(do_svn_sync, 30, loop=loop)
+        svn_sync = PeriodicScheduler(
+            do_svn_sync, 30, "svn_sync",
+            timeout=60 * 10,
+            loop=loop)
         loop.run_until_complete(svn_sync.start())
         exit_stack.callback(lambda: loop.run_until_complete(svn_sync.stop()))
 
-        trac_sync = PeriodicScheduler(do_tickets_sync, 600, loop=loop)
+        trac_sync = PeriodicScheduler(
+            do_tickets_sync, 600, "trac_sync",
+            timeout=60 * 10,
+            loop=loop)
         loop.run_until_complete(trac_sync.start())
         exit_stack.callback(lambda: loop.run_until_complete(trac_sync.stop()))
 
-        check_solutions_sync = PeriodicScheduler(do_check_solutions, 30, loop=loop)
+        check_solutions_sync = PeriodicScheduler(
+            do_check_solutions, 30, "check_solutions_sync",
+            timeout=60 * 10,
+            loop=loop)
         loop.run_until_complete(check_solutions_sync.start())
         exit_stack.callback(lambda: loop.run_until_complete(check_solutions_sync.stop()))
 
-        post_reports = PeriodicScheduler(do_post_reports, 30, loop=loop)
+        post_reports = PeriodicScheduler(
+            do_post_reports, 30, "post_reports",
+            timeout=60 * 10,
+            loop=loop)
         loop.run_until_complete(post_reports.start())
         exit_stack.callback(lambda: loop.run_until_complete(post_reports.stop()))
 
