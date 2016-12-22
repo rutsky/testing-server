@@ -112,6 +112,8 @@ async def report_check_result(db, trac_rpc, revision_id, ticket_id,
 
     res = ""
 
+    res += "Tested revision {} by {}.\n\n".format(revision_id, user)
+
     smoke_test_res = format_tests(build_url, check_result['smoke_tests']['tests'])
     if smoke_test_res:
         res += textwrap.dedent(
