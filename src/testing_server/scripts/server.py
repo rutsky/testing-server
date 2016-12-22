@@ -138,7 +138,7 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
                 check_solutions(db, LINKED_PTR_ASSIGNMENT_ID,
                                 ssh_params=worker_ssh_params, loop=loop))
             return
-        if True:
+        if False:
             loop.run_until_complete(
                 report_solutions(db, trac_rpc, LINKED_PTR_ASSIGNMENT_ID,
                                  loop=loop))
