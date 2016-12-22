@@ -171,9 +171,9 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
         loop.run_until_complete(check_solutions_sync.start())
         exit_stack.callback(lambda: loop.run_until_complete(check_solutions_sync.stop()))
 
-        #post_reports = PeriodicScheduler(do_post_reports, 30, loop=loop)
-        #loop.run_until_complete(post_reports.start())
-        #exit_stack.callback(lambda: loop.run_until_complete(post_reports.stop()))
+        post_reports = PeriodicScheduler(do_post_reports, 30, loop=loop)
+        loop.run_until_complete(post_reports.start())
+        exit_stack.callback(lambda: loop.run_until_complete(post_reports.stop()))
 
         app = aiohttp.web.Application(loop=loop)
 
