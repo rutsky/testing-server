@@ -33,11 +33,18 @@ def format_tests(build_url, tests):
         3: """{{{#!html\n<span style="color: darkgrey">EXCEPTION</span>\n}}}""",
     }
 
+    at_least_one_failed = False
+
     for test_file_name, stages, test_source in tests:
         test_file_name = pathlib.Path(test_file_name)
         test_name = test_file_name.name
 
         successfull_test = all([s[1] == 0 for s in stages])
+
+        if successfull_test:
+            continue
+        else:
+            at_least_one_failed = True
 
         if not successfull_test:
             res += textwrap.dedent("""\
@@ -78,6 +85,9 @@ def format_tests(build_url, tests):
                 stage_name=stage_name, result=results[status], info=info or '',
                 log_value=log_value)
 
+    if not at_least_one_failed:
+        return ""
+
     return res
 
 
@@ -102,31 +112,42 @@ async def report_check_result(db, trac_rpc, revision_id, ticket_id,
 
     res = ""
 
-    res += textwrap.dedent(
-        """\
-        == Smoke tests ==
+    smoke_test_res = format_tests(build_url, check_result['smoke_tests']['tests'])
+    if smoke_test_res:
+        res += textwrap.dedent(
+            """\
+            == Smoke tests ==
 
-        """)
-    res += format_tests(build_url, check_result['smoke_tests']['tests'])
+            """)
+        res += smoke_test_res
 
     smoke_tests_exit_code = check_result['smoke_tests']['exit_code']
 
     if smoke_tests_exit_code == 0:
-        res += textwrap.dedent(
-            """\
-            == Main tests ==
+        main_tests_res = format_tests(build_url, check_result['tests']['tests'])
+        if main_tests_res:
+            res += textwrap.dedent(
+                """\
+                == Main tests ==
 
-            """)
-        res += format_tests(build_url, check_result['tests']['tests'])
-
-    res += "\nCommon header used in some tests: " + build_url(
-        check_result['common_header_contents'], common_header_name) + "\n\n"
+                """)
+            res += main_tests_res
 
     success = False
     if smoke_tests_exit_code == 0 and check_result['tests']['exit_code'] == 0:
         res += "\nAll tests passed. Good job!\n\n"
         success = True
+    else:
+        res += "\nCommon header used in some tests: " + build_url(
+            check_result['common_header_contents'],
+            common_header_name) + "\n\n"
 
+    attributes = {}
+    if not success:
+        attributes = {
+            'type': 'ожидаются исправления'
+        }
+    await trac_rpc.ticket.update(ticket_id, res, attributes, True)
 
     #import pprint
     #pprint.pprint(check_result)
