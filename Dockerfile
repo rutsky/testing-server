@@ -10,6 +10,12 @@ RUN apt-get update && apt-get install -y \
     sudo \
     subversion \
     && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m user -s /bin/bash
 
