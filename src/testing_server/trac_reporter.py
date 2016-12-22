@@ -74,7 +74,8 @@ def format_tests(build_url, tests):
 async def report_check_result(db, trac_rpc, revision_id, ticket_id,
                               *, loop):
     # TODO
-    uri = "http://localhost:8080"
+    #uri = "http://localhost:8080"
+    uri = "http://cppcheck.rutsky.org"
     task_name = "linked_ptr"
     common_header_name = "common.h"
 
