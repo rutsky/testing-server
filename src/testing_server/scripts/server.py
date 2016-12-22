@@ -97,10 +97,12 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
     token_provider = JWTTokenProvider(token_secret)
 
     loop = asyncio.get_event_loop()
-    asyncio.set_event_loop(None)
-    # See <https://github.com/python/asyncio/issues/478#issuecomment-268476438>
-    # for details.
-    asyncio.get_child_watcher().attach_loop(loop)
+    if False:
+        # TODO: asyncssh currently broken due to this
+        asyncio.set_event_loop(None)
+        # See <https://github.com/python/asyncio/issues/478#issuecomment-268476438>
+        # for details.
+        asyncio.get_child_watcher().attach_loop(loop)
 
     _setup_termination(loop=loop)
     _setup_sentry(loop=loop)
@@ -279,6 +281,9 @@ def main():
         "--worker-ssh-host",
     )
     parser.add_argument(
+        "--worker-ssh-port",
+    )
+    parser.add_argument(
         "--worker-ssh-username",
     )
     parser.add_argument(
@@ -305,6 +310,7 @@ def main():
             svn_password=args.svn_password,
             worker_ssh_params=dict(
                 host=args.worker_ssh_host,
+                port=args.worker_ssh_port,
                 username=args.worker_ssh_username,
                 known_hosts=args.worker_ssh_known_hosts_file,
                 client_keys=[args.worker_ssh_key],
