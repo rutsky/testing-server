@@ -129,6 +129,14 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
                 svn_password=svn_password,
                 loop=loop)
 
+        async def do_check_solutions():
+            await check_solutions(db, LINKED_PTR_ASSIGNMENT_ID,
+                                  ssh_params=worker_ssh_params, loop=loop)
+
+        async def do_post_reports():
+            await report_solutions(
+                db, trac_rpc, LINKED_PTR_ASSIGNMENT_ID, loop=loop)
+
         if False:
             loop.run_until_complete(
                 db.get_checkable_solutions(LINKED_PTR_ASSIGNMENT_ID))
@@ -156,6 +164,14 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
         trac_sync = PeriodicScheduler(do_tickets_sync, 600, loop=loop)
         loop.run_until_complete(trac_sync.start())
         exit_stack.callback(lambda: loop.run_until_complete(trac_sync.stop()))
+
+        check_solutions_sync = PeriodicScheduler(do_check_solutions, 30, loop=loop)
+        loop.run_until_complete(check_solutions_sync.start())
+        exit_stack.callback(lambda: loop.run_until_complete(check_solutions_sync.stop()))
+
+        #post_reports = PeriodicScheduler(do_post_reports, 30, loop=loop)
+        #loop.run_until_complete(post_reports.start())
+        #exit_stack.callback(lambda: loop.run_until_complete(post_reports.stop()))
 
         app = aiohttp.web.Application(loop=loop)
 
