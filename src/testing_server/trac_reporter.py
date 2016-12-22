@@ -46,7 +46,7 @@ def format_tests(build_url, tests):
 
         for stage_name, status, info, log_id in stages:
             log_value = ""
-            if log_id:
+            if log_id and not test_name.startswith('ncomp'):
                 log_name = test_file_name.with_suffix('').name + "-" + stage_name + ".log"
                 log_value = build_url(log_id, log_name)
             res += textwrap.dedent(
