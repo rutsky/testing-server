@@ -7,7 +7,7 @@ __all__ = ('__version__',)
 # All non-development environment should get this version as project version.
 # In development environment this version might be used as base for evaluating
 # development version.
-_version = '0.1.1'
+_version = '0.1.2'
 _project_name = 'testing-server'
 
 _git_command = 'git describe --tags --long --dirty'.split()

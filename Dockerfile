@@ -21,7 +21,7 @@ RUN useradd -m user -s /bin/bash
 
 RUN su -l user -c "python3 -m venv --copies /home/user/env;"
 RUN su -l user -c "source /home/user/env/bin/activate; pip install -U pip setuptools wheel"
-RUN su -l user -c "/home/user/env/bin/pip install git+https://github.com/rutsky/testing-server.git@v0.1.1"
+RUN su -l user -c "/home/user/env/bin/pip install git+https://github.com/rutsky/testing-server.git@v0.1.2"
 
 EXPOSE 8080
 USER user
