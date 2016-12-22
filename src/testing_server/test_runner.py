@@ -44,9 +44,16 @@ async def run_check(user, revision_id, solution_blob, assignment_name,
             _logger.debug("{}:{} stdout: {}".format(
                 user, revision_id, line.rstrip()))
 
+        _logger.debug("{}:{} waiting process termination...".format(
+            user, revision_id))
         await process.wait()
 
+        _logger.debug("{}:{} reading stderr...".format(
+            user, revision_id))
         err = await process.stderr.read()
+        _logger.debug("{}:{} got {} bytes in stderr".format(
+            user, revision_id, len(err)))
+
         parts = err.split('\n')
         idx = parts.index('CI RESULT') + 1
         ci_log = parts[idx]
