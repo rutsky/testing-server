@@ -18,9 +18,9 @@ from testing_server.credentials_checker import HtpasswdCredentialsChecker
 from testing_server.server import Server
 from testing_server.token_provider import JWTTokenProvider
 from testing_server.db import (
-    Database, LINKED_PTR_ASSIGNMENT_ID as ASSIGNMENT_ID,
-    LINKED_PTR_PATH as ASSIGNMENT_PATH,
-    LINKED_PTR_COMPONENT as ASSIGNMENT_COMPONENT)
+    Database, LAZY_STRING_ASSIGNMENT_ID as ASSIGNMENT_ID,
+    LAZY_STRING_PATH as ASSIGNMENT_PATH,
+    LAZY_STRING_COMPONENT as ASSIGNMENT_COMPONENT)
 from testing_server.trac import sync_tickets
 from testing_server.svn import sync_svn
 from testing_server.scheduler import PeriodicScheduler

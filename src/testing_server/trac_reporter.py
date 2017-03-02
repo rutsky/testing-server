@@ -96,7 +96,7 @@ async def report_check_result(db, trac_rpc, revision_id, ticket_id,
     # TODO
     #uri = "http://localhost:8080"
     uri = "http://cppcheck.rutsky.org"
-    task_name = "linked_ptr"
+    task_name = "lazy_string"
     common_header_name = "common.h"
 
     check_result = await db.get_revision_check_result(revision_id)

@@ -69,10 +69,10 @@ async def run_check(user, revision_id, solution_blob, assignment_name,
 
 async def check_revision(db, revision_id, *, ssh_params, loop):
     # TODO
-    solution_name = 'linked_ptr.hpp'
-    tests_dir = 'linked_ptr/tests/'
-    common_header = 'linked_ptr/common/common.h'
-    assignment_name = 'linked_ptr'
+    solution_name = 'lazy_string.hpp'
+    tests_dir = 'lazy_string/tests/'
+    common_header = 'lazy_string/tests/common.h'
+    assignment_name = 'lazy_string'
 
     curstate = await db.get_revision_state(revision_id)
 
