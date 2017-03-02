@@ -31,7 +31,8 @@ def credentials_checker():
 def client(loop: asyncio.BaseEventLoop, test_server, test_client,
            credentials_checker, token_provider):
     app = aiohttp.web.Application(loop=loop)
-    app_server = Server(app, credentials_checker, token_provider, loop=loop)
+    db = None  # TODO
+    app_server = Server(app, credentials_checker, token_provider, db, loop=loop)
     loop.run_until_complete(app_server.start())
     server = loop.run_until_complete(test_server(app))
     client = loop.run_until_complete(test_client(server))
