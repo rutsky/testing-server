@@ -26,6 +26,10 @@ LINKED_PTR_ASSIGNMENT_ID = 1
 LINKED_PTR_PATH = "ha3/linked_ptr.hpp"
 LINKED_PTR_COMPONENT = "HA#3 linked_ptr"
 
+LAZY_STRING_ASSIGNMENT_ID = 2
+LAZY_STRING_PATH = "ha4/lazy_string.hpp"
+LAZY_STRING_COMPONENT = "HA#4 lazy_string"
+
 
 class Assignments(Base):
     __tablename__ = 'assignments'
@@ -142,6 +146,13 @@ class Database(AbstractDatabase):
                     name="linked_ptr",
                     svn_path=LINKED_PTR_PATH,
                     trac_component=LINKED_PTR_COMPONENT,
+                )
+                await conn.execute(stmt)
+                stmt = assignments_tbl.insert().values(
+                    id=LAZY_STRING_ASSIGNMENT_ID,
+                    name="lazy_string",
+                    svn_path=LAZY_STRING_PATH,
+                    trac_component=LAZY_STRING_COMPONENT,
                 )
                 await conn.execute(stmt)
 
