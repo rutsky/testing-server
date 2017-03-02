@@ -4,8 +4,6 @@ from .abc import AbstracePublisher, AbstractSubscriber
 
 __all__ = ('Publisher',)
 
-import aiohttp.pytest_plugin
-
 
 class Publisher(AbstracePublisher):
     class _Subscriber(AbstractSubscriber):
