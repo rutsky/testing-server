@@ -1,7 +1,10 @@
 import asyncio
 from abc import ABC, abstractmethod, abstractproperty
 
-__all__ = ('AbstractCredentialsChecker', 'AbstractTokenProvider')
+__all__ = (
+    'AbstractCredentialsChecker', 'AbstractTokenProvider',
+    'AbstractSubscriber', 'AbstractPublisher', 'AbstractDatabase',
+)
 
 
 class AbstractCredentialsChecker(ABC):
