@@ -21,7 +21,13 @@ RUN useradd -m user -s /bin/bash
 
 RUN su -l user -c "python3 -m venv --copies /home/user/env;"
 RUN su -l user -c "source /home/user/env/bin/activate; pip install -U pip setuptools wheel"
-RUN su -l user -c "/home/user/env/bin/pip install git+https://github.com/rutsky/testing-server.git@v0.1.3"
+
+ENV TESTING_SERVER_VER v0.1.4
+
+# Workaround for <https://github.com/saltstack/pytest-logging/pull/7>
+RUN su -l user -c "/home/user/env/bin/pip install git+https://github.com/rutsky/pytest-logging@fix-setup-py-encoding"
+RUN su -l user -c "/home/user/env/bin/pip install -r https://raw.githubusercontent.com/rutsky/testing-server/${TESTING_SERVER_VER}/requirements.txt"
+RUN su -l user -c "/home/user/env/bin/pip install git+https://github.com/rutsky/testing-server.git@${TESTING_SERVER_VER}"
 
 EXPOSE 8080
 USER user
