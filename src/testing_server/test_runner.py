@@ -1,3 +1,4 @@
+import asyncio
 import os
 import logging
 import json
@@ -34,19 +35,34 @@ async def run_check(user, revision_id, solution_blob, assignment_name,
             solution_file=solution_file, tests_dir=tests_dir,
             logs_dir=logs_dir, out_log=out_log, common_header=common_header)
 
+        async def log_stream(stream, name):
+            while True:
+                try:
+                    line = await stream.readline()
+                except asyncio.CancelledError:
+                    _logger.debug("{}:{} {}: cancelling reading".format(
+                        user, revision_id, name))
+                    return
+
+                if not line:
+                    _logger.debug("{}:{} {}: got end of stream".format(
+                        user, revision_id, name))
+                    break
+
+                _logger.debug("{}:{} {}: {}".format(
+                    user, revision_id, name, line.rstrip()))
+
         process = await conn.create_process(cmd)
-        while True:
-            line = await process.stdout.readline()
+        stdout_logger_task = loop.create_task(
+            log_stream(process.stdout, "stdout"))
 
-            if not line:
-                break
-
-            _logger.debug("{}:{} stdout: {}".format(
-                user, revision_id, line.rstrip()))
-
-        _logger.debug("{}:{} waiting process termination...".format(
-            user, revision_id))
-        await process.wait()
+        try:
+            _logger.debug("{}:{} waiting process termination...".format(
+                user, revision_id))
+            await process.wait()
+        except Exception:
+            stdout_logger_task.cancel()
+            raise
 
         _logger.debug("{}:{} reading stderr...".format(
             user, revision_id))
