@@ -70,10 +70,17 @@ async def run_check(user, revision_id, solution_blob, assignment_name,
         _logger.debug("{}:{} got {} bytes in stderr".format(
             user, revision_id, len(err)))
 
-        parts = err.split('\n')
-        idx = parts.index('CI RESULT') + 1
-        ci_log = parts[idx]
-        assert parts[idx + 1] == 'CI RESULT END'
+        try:
+            parts = err.split('\n')
+            idx = parts.index('CI RESULT') + 1
+            ci_log = parts[idx]
+            assert parts[idx + 1] == 'CI RESULT END'
+        except:
+            _logger.exception(
+                "{}:{} stderr parsing failed:\n"
+                "----- BEGIN -----\n{}\n----- END -----\n".format(
+                    user, revision_id, err))
+            raise
 
         ci_data = json.loads(ci_log)
 
