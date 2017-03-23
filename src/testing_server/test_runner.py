@@ -146,10 +146,20 @@ async def check_revision(db, revision_id, *, ssh_params, loop):
         if prev_ci_data:
             prev_failures = list(
                 get_failed_tests_from_check_result(prev_ci_data))
+        else:
+            _logger.info(
+                "revision {}: in previous check {} errors".format(
+                    revision_id, len(prev_failures)))
         cur_failures = list(get_failed_tests_from_check_result(ci_data))
+        _logger.info(
+            "revision {}: in current check {} errors".format(
+                revision_id, len(cur_failures)))
 
         if prev_failures == cur_failures:
             # No new failure since last check.
+            _logger.info(
+                "revision {}: no new failures since last check for".format(
+                    revision_id))
             await db.set_revision_state(revision_id, 'reported')
         else:
             await db.set_revision_state(revision_id, 'checked')
