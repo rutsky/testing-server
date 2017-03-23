@@ -184,3 +184,4 @@ async def report_solutions(db, trac_rpc, assignment_id,
                 _logger.exception(
                     "Report of revision {} to ticket {} failed.".format(
                         revision_id, ticket_id))
+                raise
