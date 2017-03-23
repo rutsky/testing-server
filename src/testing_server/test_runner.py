@@ -124,13 +124,39 @@ async def check_revision(db, revision_id, *, ssh_params, loop):
                 test_part[3] = await decode(test_part[3])
             test[2] = await decode(test[2])
 
+        prev_ci_data = await db.get_revision_check_result(revision_id)
+
         await db.set_revision_check_result(revision_id, ci_data)
+
+        def get_failed_tests_from_tests(tests):
+            for test_file_name, stages, test_source in tests:
+                if not all([s[1] == 0 for s in stages]):
+                    yield (test_file_name, stages, test_source)
+
+        def get_failed_tests_from_check_result(check_result):
+            smoke_tests_exit_code = check_result['smoke_tests']['exit_code']
+            if smoke_tests_exit_code != 0:
+                yield from get_failed_tests_from_tests(
+                    check_result['smoke_tests']['tests'])
+            else:
+                yield from get_failed_tests_from_tests(
+                    check_result['tests']['tests'])
+
+        prev_failures = None
+        if prev_ci_data:
+            prev_failures = list(
+                get_failed_tests_from_check_result(prev_ci_data))
+        cur_failures = list(get_failed_tests_from_check_result(ci_data))
+
+        if prev_failures == cur_failures:
+            # No new failure since last check.
+            await db.set_revision_state(revision_id, 'reported')
+        else:
+            await db.set_revision_state(revision_id, 'checked')
 
     except:
         await db.set_revision_state(revision_id, 'failed')
         raise
-    else:
-        await db.set_revision_state(revision_id, 'checked')
 
 
 async def check_solutions(db, assignment_id, *,

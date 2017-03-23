@@ -80,7 +80,7 @@ class Revisions(Base):
         'solution_id', String, ForeignKey('blobs.id'),
         nullable=False)
     commit_message = Column(String, nullable=True)
-    # 'obsolete', 'new', 'checking', 'checked', 'reported'
+    # 'obsolete', 'new', 'checking', 'checked', 'failed', 'reported'
     state = Column(String, nullable=False)
 
     # TODO: store normalized or as JSON field.
@@ -232,7 +232,9 @@ class Database(AbstractDatabase):
             ).where(
                 revisions_tbl.c.id == id
             )
-            return json.loads(await conn.scalar(stmt))
+            data = await conn.scalar(stmt)
+            if data is not None:
+                return json.loads(data)
 
     async def set_revision_check_result(self, id, check_result):
         async with self.engine.acquire() as conn:
