@@ -146,7 +146,6 @@ async def check_revision(db, revision_id, *, ssh_params, loop):
         if prev_ci_data:
             prev_failures = list(
                 get_failed_tests_from_check_result(prev_ci_data))
-        else:
             _logger.info(
                 "revision {}: in previous check {} errors".format(
                     revision_id, len(prev_failures)))
