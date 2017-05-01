@@ -3,6 +3,7 @@ import os
 import logging
 import json
 import codecs
+import random
 
 import asyncssh
 
@@ -214,7 +215,7 @@ async def check_solutions(db, assignment_id, *,
         else:
             _logger.info("Need to check {} solutions.".format(solutions))
 
-        revision_id = solutions[0]
+        revision_id = random.choice(solutions)
 
         try:
             await check_revision(db, revision_id, assignment_id,
