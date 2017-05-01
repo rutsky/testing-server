@@ -30,6 +30,27 @@ LAZY_STRING_ASSIGNMENT_ID = 2
 LAZY_STRING_PATH = "ha4/lazy_string.hpp"
 LAZY_STRING_COMPONENT = "HA#4 lazy_string"
 
+FUNCTION_ASSIGNMENT_ID = 3
+FUNCTION_PATH = "ha5/fn.hpp"
+FUNCTION_COMPONENT = "HA#5 function"
+
+BIND_ASSIGNMENT_ID = 4
+BIND_PATH = "ha6/bind.hpp"
+BIND_COMPONENT = "HA#6 bind"
+
+COMPONENT_TO_ASSIGNMENT_ID = {
+    LINKED_PTR_COMPONENT: LINKED_PTR_ASSIGNMENT_ID,
+    LAZY_STRING_COMPONENT: LAZY_STRING_ASSIGNMENT_ID,
+    FUNCTION_COMPONENT: FUNCTION_ASSIGNMENT_ID,
+    BIND_COMPONENT: BIND_ASSIGNMENT_ID,
+}
+
+PATH_TO_ASSIGNMENT_ID = {
+    LINKED_PTR_PATH: LINKED_PTR_ASSIGNMENT_ID,
+    LAZY_STRING_PATH: LAZY_STRING_ASSIGNMENT_ID,
+    FUNCTION_PATH: FUNCTION_ASSIGNMENT_ID,
+    BIND_PATH: BIND_ASSIGNMENT_ID,
+}
 
 class Assignments(Base):
     __tablename__ = 'assignments'
@@ -153,6 +174,20 @@ class Database(AbstractDatabase):
                     name="lazy_string",
                     svn_path=LAZY_STRING_PATH,
                     trac_component=LAZY_STRING_COMPONENT,
+                )
+                await conn.execute(stmt)
+                stmt = assignments_tbl.insert().values(
+                    id=FUNCTION_ASSIGNMENT_ID,
+                    name="function",
+                    svn_path=FUNCTION_PATH,
+                    trac_component=FUNCTION_COMPONENT,
+                )
+                await conn.execute(stmt)
+                stmt = assignments_tbl.insert().values(
+                    id=BIND_ASSIGNMENT_ID,
+                    name="bind",
+                    svn_path=BIND_PATH,
+                    trac_component=BIND_COMPONENT,
                 )
                 await conn.execute(stmt)
 

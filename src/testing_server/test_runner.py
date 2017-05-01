@@ -90,12 +90,34 @@ async def run_check(user, revision_id, solution_blob, assignment_name,
         return ci_data
 
 
-async def check_revision(db, revision_id, *, ssh_params, loop):
+async def check_revision(db, revision_id, assignment_id, *, ssh_params, loop):
     # TODO
-    solution_name = 'lazy_string.hpp'
-    tests_dir = 'lazy_string/tests/'
-    common_header = 'lazy_string/tests/common.h'
-    assignment_name = 'lazy_string'
+    assigments_config = {
+        db.LINKED_PTR_ASSIGNMENT_ID:
+            (os.path.basename(db.LINKED_PTR_PATH),
+             'linked_ptr/tests/',
+             'linked_ptr/tests/common.h',
+             'linked_ptr'),
+        db.LAZY_STRING_ASSIGNMENT_ID:
+            (os.path.basename(db.LAZY_STRING_PATH),
+             'lazy_string/tests/',
+             'lazy_string/tests/common.h',
+             'lazy_string'),
+        db.FUNCTION_ASSIGNMENT_ID:
+            (os.path.basename(db.FUNCTION_PATH),
+             'function/tests/',
+             'function/tests/common.h',
+             'function'),
+        db.BIND_ASSIGNMENT_ID:
+            (os.path.basename(db.BIND_PATH),
+             'bind/tests/',
+             'bind/tests/common.h',
+             'bind'),
+    }
+
+    assert assignment_id in assigments_config
+    solution_name, tests_dir, common_header, assignment_name = \
+        assigments_config[assignment_id]
 
     curstate = await db.get_revision_state(revision_id)
 
@@ -178,7 +200,8 @@ async def check_revision(db, revision_id, *, ssh_params, loop):
 async def check_solutions(db, assignment_id, *,
                           ssh_params,
                           loop):
-    _logger.info("Started checking solutions.")
+    _logger.info("Started checking solutions for assignment {}.".format(
+        assignment_id))
 
     await db.reset_revision_checking_state()
 
@@ -194,7 +217,7 @@ async def check_solutions(db, assignment_id, *,
         revision_id = solutions[0]
 
         try:
-            await check_revision(db, revision_id,
+            await check_revision(db, revision_id, assignment_id,
                                  ssh_params=ssh_params, loop=loop)
         except Exception:
             _logger.exception(

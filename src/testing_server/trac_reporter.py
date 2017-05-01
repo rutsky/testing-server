@@ -92,12 +92,24 @@ def format_tests(build_url, tests):
 
 
 async def report_check_result(db, trac_rpc, revision_id, ticket_id,
-                              *, loop):
+                              assignment_id, *, loop):
     # TODO
     #uri = "http://localhost:8080"
     uri = "http://cppcheck.rutsky.org"
-    task_name = "lazy_string"
-    common_header_name = "common.h"
+
+    assigments_config = {
+        db.LINKED_PTR_ASSIGNMENT_ID:
+            ("linked_ptr", "common.h"),
+        db.LAZY_STRING_ASSIGNMENT_ID:
+            ("lazy_string", "common.h"),
+        db.FUNCTION_ASSIGNMENT_ID:
+            ("function", "common.h"),
+        db.BIND_ASSIGNMENT_ID:
+            ("bind", "common.h"),
+    }
+
+    assert assignment_id in assigments_config
+    task_name, common_header_name = assigments_config[assignment_id]
 
     check_result = await db.get_revision_check_result(revision_id)
     user = await db.get_revision_user(revision_id)
@@ -160,7 +172,8 @@ async def report_check_result(db, trac_rpc, revision_id, ticket_id,
 
 async def report_solutions(db, trac_rpc, assignment_id,
                            *, loop):
-    _logger.info("Started reporting results.")
+    _logger.info("Started reporting results for assignment {}.".format(
+        assignment_id))
 
     while True:
         solutions = await db.get_reportable_solutions(assignment_id)
@@ -176,7 +189,7 @@ async def report_solutions(db, trac_rpc, assignment_id,
 
             try:
                 await report_check_result(db, trac_rpc, revision_id, ticket_id,
-                                          loop=loop)
+                                          assignment_id, loop=loop)
 
                 await db.set_revision_state(revision_id, 'reported')
 

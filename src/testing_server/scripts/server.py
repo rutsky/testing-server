@@ -18,9 +18,10 @@ from testing_server.credentials_checker import HtpasswdCredentialsChecker
 from testing_server.server import Server
 from testing_server.token_provider import JWTTokenProvider
 from testing_server.db import (
-    Database, LAZY_STRING_ASSIGNMENT_ID as ASSIGNMENT_ID,
-    LAZY_STRING_PATH as ASSIGNMENT_PATH,
-    LAZY_STRING_COMPONENT as ASSIGNMENT_COMPONENT)
+    Database, LINKED_PTR_ASSIGNMENT_ID, LAZY_STRING_ASSIGNMENT_ID,
+    FUNCTION_ASSIGNMENT_ID, BIND_ASSIGNMENT_ID,
+    PATH_TO_ASSIGNMENT_ID,
+    COMPONENT_TO_ASSIGNMENT_ID)
 from testing_server.trac import sync_tickets
 from testing_server.svn import sync_svn
 from testing_server.scheduler import PeriodicScheduler
@@ -122,39 +123,51 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
 
         async def do_tickets_sync():
             await sync_tickets(
-                db, trac_rpc, {ASSIGNMENT_COMPONENT: ASSIGNMENT_ID})
+                db, trac_rpc, COMPONENT_TO_ASSIGNMENT_ID)
 
         async def do_svn_sync():
             await sync_svn(
                 db,
-                {ASSIGNMENT_PATH: ASSIGNMENT_ID},
+                PATH_TO_ASSIGNMENT_ID,
                 svn_uri=svn_uri,
                 svn_username=svn_username,
                 svn_password=svn_password,
                 loop=loop)
 
         async def do_check_solutions():
-            await check_solutions(db, ASSIGNMENT_ID,
+            #await check_solutions(db, LINKED_PTR_ASSIGNMENT_ID,
+            #                      ssh_params=worker_ssh_params, loop=loop)
+            await check_solutions(db, LAZY_STRING_ASSIGNMENT_ID,
+                                  ssh_params=worker_ssh_params, loop=loop)
+            #await check_solutions(db, FUNCTION_ASSIGNMENT_ID,
+            #                      ssh_params=worker_ssh_params, loop=loop)
+            await check_solutions(db, BIND_ASSIGNMENT_ID,
                                   ssh_params=worker_ssh_params, loop=loop)
 
         async def do_post_reports():
+            #await report_solutions(
+            #    db, trac_rpc, LINKED_PTR_ASSIGNMENT_ID, loop=loop)
             await report_solutions(
-                db, trac_rpc, ASSIGNMENT_ID, loop=loop)
+                db, trac_rpc, LAZY_STRING_ASSIGNMENT_ID, loop=loop)
+            #await report_solutions(
+            #    db, trac_rpc, FUNCTION_ASSIGNMENT_ID, loop=loop)
+            #await report_solutions(
+            #    db, trac_rpc, BIND_ASSIGNMENT_ID, loop=loop)
 
-        if False:
-            loop.run_until_complete(
-                db.get_checkable_solutions(ASSIGNMENT_ID))
-            return
-        if False:
-            loop.run_until_complete(
-                check_solutions(db, ASSIGNMENT_ID,
-                                ssh_params=worker_ssh_params, loop=loop))
-            return
-        if False:
-            loop.run_until_complete(
-                report_solutions(db, trac_rpc, ASSIGNMENT_ID,
-                                 loop=loop))
-            return
+        # if False:
+        #     loop.run_until_complete(
+        #         db.get_checkable_solutions(ASSIGNMENT_ID))
+        #     return
+        # if False:
+        #     loop.run_until_complete(
+        #         check_solutions(db, ASSIGNMENT_ID,
+        #                         ssh_params=worker_ssh_params, loop=loop))
+        #     return
+        # if False:
+        #     loop.run_until_complete(
+        #         report_solutions(db, trac_rpc, ASSIGNMENT_ID,
+        #                          loop=loop))
+        #     return
 
         if _DEBUG_SYNC_TICKETS:
             loop.run_until_complete(do_tickets_sync())
