@@ -222,3 +222,4 @@ async def check_solutions(db, assignment_id, *,
         except Exception:
             _logger.exception(
                 "Check of revision {} failed.".format(revision_id))
+            raise
