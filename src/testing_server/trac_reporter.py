@@ -1,7 +1,13 @@
-import os
 import logging
 import textwrap
 import pathlib
+
+from testing_server.db import (
+    LINKED_PTR_ASSIGNMENT_ID,
+    LAZY_STRING_ASSIGNMENT_ID,
+    FUNCTION_ASSIGNMENT_ID,
+    BIND_ASSIGNMENT_ID,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -98,13 +104,13 @@ async def report_check_result(db, trac_rpc, revision_id, ticket_id,
     uri = "http://cppcheck.rutsky.org"
 
     assigments_config = {
-        db.LINKED_PTR_ASSIGNMENT_ID:
+        LINKED_PTR_ASSIGNMENT_ID:
             ("linked_ptr", "common.h"),
-        db.LAZY_STRING_ASSIGNMENT_ID:
+        LAZY_STRING_ASSIGNMENT_ID:
             ("lazy_string", "common.h"),
-        db.FUNCTION_ASSIGNMENT_ID:
+        FUNCTION_ASSIGNMENT_ID:
             ("function", "common.h"),
-        db.BIND_ASSIGNMENT_ID:
+        BIND_ASSIGNMENT_ID:
             ("bind", "common.h"),
     }
 

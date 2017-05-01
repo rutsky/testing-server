@@ -7,6 +7,18 @@ import random
 
 import asyncssh
 
+from .db import (
+    LINKED_PTR_ASSIGNMENT_ID,
+    LAZY_STRING_ASSIGNMENT_ID,
+    FUNCTION_ASSIGNMENT_ID,
+    BIND_ASSIGNMENT_ID,
+
+    LINKED_PTR_PATH,
+    LAZY_STRING_PATH,
+    FUNCTION_PATH,
+    BIND_PATH
+)
+
 _logger = logging.getLogger(__name__)
 
 __all__ = ('check_solutions',)
@@ -94,23 +106,23 @@ async def run_check(user, revision_id, solution_blob, assignment_name,
 async def check_revision(db, revision_id, assignment_id, *, ssh_params, loop):
     # TODO
     assigments_config = {
-        db.LINKED_PTR_ASSIGNMENT_ID:
-            (os.path.basename(db.LINKED_PTR_PATH),
+        LINKED_PTR_ASSIGNMENT_ID:
+            (os.path.basename(LINKED_PTR_PATH),
              'linked_ptr/tests/',
              'linked_ptr/tests/common.h',
              'linked_ptr'),
-        db.LAZY_STRING_ASSIGNMENT_ID:
-            (os.path.basename(db.LAZY_STRING_PATH),
+        LAZY_STRING_ASSIGNMENT_ID:
+            (os.path.basename(LAZY_STRING_PATH),
              'lazy_string/tests/',
              'lazy_string/tests/common.h',
              'lazy_string'),
-        db.FUNCTION_ASSIGNMENT_ID:
-            (os.path.basename(db.FUNCTION_PATH),
+        FUNCTION_ASSIGNMENT_ID:
+            (os.path.basename(FUNCTION_PATH),
              'function/tests/',
              'function/tests/common.h',
              'function'),
-        db.BIND_ASSIGNMENT_ID:
-            (os.path.basename(db.BIND_PATH),
+        BIND_ASSIGNMENT_ID:
+            (os.path.basename(BIND_PATH),
              'bind/tests/',
              'bind/tests/common.h',
              'bind'),
