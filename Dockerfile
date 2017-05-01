@@ -22,7 +22,7 @@ RUN useradd -m user -s /bin/bash
 RUN su -l user -c "python3 -m venv --copies /home/user/env;"
 RUN su -l user -c "source /home/user/env/bin/activate; pip install -U pip setuptools wheel"
 
-ENV TESTING_SERVER_VER v0.1.11
+ENV TESTING_SERVER_VER v0.1.12
 
 # Workaround for <https://github.com/saltstack/pytest-logging/pull/7>
 RUN su -l user -c "/home/user/env/bin/pip install git+https://github.com/rutsky/pytest-logging@fix-setup-py-encoding"
