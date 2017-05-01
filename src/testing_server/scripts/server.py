@@ -151,8 +151,8 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
                 db, trac_rpc, LAZY_STRING_ASSIGNMENT_ID, loop=loop)
             #await report_solutions(
             #    db, trac_rpc, FUNCTION_ASSIGNMENT_ID, loop=loop)
-            #await report_solutions(
-            #    db, trac_rpc, BIND_ASSIGNMENT_ID, loop=loop)
+            await report_solutions(
+                db, trac_rpc, BIND_ASSIGNMENT_ID, loop=loop)
 
         # if False:
         #     loop.run_until_complete(
