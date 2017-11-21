@@ -139,8 +139,8 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
                 loop=loop)
 
         async def do_check_solutions():
-            #await check_solutions(db, LINKED_PTR_ASSIGNMENT_ID,
-            #                      ssh_params=worker_ssh_params, loop=loop)
+            await check_solutions(db, LINKED_PTR_ASSIGNMENT_ID,
+                                  ssh_params=worker_ssh_params, loop=loop)
             await check_solutions(db, LAZY_STRING_ASSIGNMENT_ID,
                                   ssh_params=worker_ssh_params, loop=loop)
             await check_solutions(db, FUNCTION_ASSIGNMENT_ID,
@@ -149,8 +149,8 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
                                   ssh_params=worker_ssh_params, loop=loop)
 
         async def do_post_reports():
-            #await report_solutions(
-            #    db, trac_rpc, LINKED_PTR_ASSIGNMENT_ID, loop=loop)
+            await report_solutions(
+                db, trac_rpc, LINKED_PTR_ASSIGNMENT_ID, loop=loop)
             await report_solutions(
                 db, trac_rpc, LAZY_STRING_ASSIGNMENT_ID, loop=loop)
             await report_solutions(
