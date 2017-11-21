@@ -93,7 +93,11 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
                svn_username=None,
                svn_password=None,
                worker_ssh_params,
-               enable_cors=False):
+               enable_cors=False,
+               skip_svn_sync=False,
+               skip_trac_sync=False,
+               skip_checking=False,
+               skip_reporting=False):
     shutdown_timeout = 10
 
     credentials_checker = HtpasswdCredentialsChecker(htpasswd)
@@ -174,33 +178,37 @@ def run_server(hostname, port, htpasswd, token_secret, postgres_uri,
         if _DEBUG_SYNC_SVN:
             loop.run_until_complete(do_svn_sync())
 
-        svn_sync = PeriodicScheduler(
-            do_svn_sync, 30, "svn_sync",
-            timeout=60 * 10,
-            loop=loop)
-        loop.run_until_complete(svn_sync.start())
-        exit_stack.callback(lambda: loop.run_until_complete(svn_sync.stop()))
+        if not skip_svn_sync:
+            svn_sync = PeriodicScheduler(
+                do_svn_sync, 30, "svn_sync",
+                timeout=60 * 10,
+                loop=loop)
+            loop.run_until_complete(svn_sync.start())
+            exit_stack.callback(lambda: loop.run_until_complete(svn_sync.stop()))
 
-        trac_sync = PeriodicScheduler(
-            do_tickets_sync, 600, "trac_sync",
-            timeout=60 * 10,
-            loop=loop)
-        loop.run_until_complete(trac_sync.start())
-        exit_stack.callback(lambda: loop.run_until_complete(trac_sync.stop()))
+        if not skip_trac_sync:
+            trac_sync = PeriodicScheduler(
+                do_tickets_sync, 600, "trac_sync",
+                timeout=60 * 10,
+                loop=loop)
+            loop.run_until_complete(trac_sync.start())
+            exit_stack.callback(lambda: loop.run_until_complete(trac_sync.stop()))
 
-        check_solutions_sync = PeriodicScheduler(
-            do_check_solutions, 30, "check_solutions_sync",
-            timeout=60 * 10,
-            loop=loop)
-        loop.run_until_complete(check_solutions_sync.start())
-        exit_stack.callback(lambda: loop.run_until_complete(check_solutions_sync.stop()))
+        if not skip_checking:
+            check_solutions_sync = PeriodicScheduler(
+                do_check_solutions, 30, "check_solutions_sync",
+                timeout=60 * 10,
+                loop=loop)
+            loop.run_until_complete(check_solutions_sync.start())
+            exit_stack.callback(lambda: loop.run_until_complete(check_solutions_sync.stop()))
 
-        post_reports = PeriodicScheduler(
-            do_post_reports, 30, "post_reports",
-            timeout=60 * 10,
-            loop=loop)
-        loop.run_until_complete(post_reports.start())
-        exit_stack.callback(lambda: loop.run_until_complete(post_reports.stop()))
+        if not skip_reporting:
+            post_reports = PeriodicScheduler(
+                do_post_reports, 30, "post_reports",
+                timeout=60 * 10,
+                loop=loop)
+            loop.run_until_complete(post_reports.start())
+            exit_stack.callback(lambda: loop.run_until_complete(post_reports.stop()))
 
         app = aiohttp.web.Application(loop=loop)
 
@@ -277,6 +285,26 @@ def main():
              "CORS specification."
     )
     parser.add_argument(
+        "--skip-svn-sync",
+        action='store_true',
+        help="Don't do Subversion synchronization."
+    )
+    parser.add_argument(
+        "--skip-trac-sync",
+        action='store_true',
+        help="Don't do Trac synchronization."
+    )
+    parser.add_argument(
+        "--skip-checking",
+        action='store_true',
+        help="Do not check solutions."
+    )
+    parser.add_argument(
+        "--skip-reporting",
+        action='store_true',
+        help="Do not report check results."
+    )
+    parser.add_argument(
         "--token-secret-file",
         required=True,
         help="Secret used for token generation."
@@ -342,7 +370,11 @@ def main():
                 known_hosts=args.worker_ssh_known_hosts_file,
                 client_keys=[args.worker_ssh_key],
             ),
-            enable_cors=args.enable_cors)
+            enable_cors=args.enable_cors,
+            skip_svn_sync=args.skip_svn_sync,
+            skip_trac_sync=args.skip_trac_sync,
+            skip_checking=args.skip_checking,
+            skip_reporting=args.skip_reporting)
 
     except Exception:
         _logger.exception("Server failed")
