@@ -67,7 +67,24 @@ def format_tests(build_url, tests):
             """).format(
                 test_name=test_name, num_stages=len(stages))
 
-        for stage_name, status, info, log_id in stages:
+        for stage_row in stages:
+            if len(stage_row) == 5:
+                stage_name, status, info, log_id, command = stage_row
+            else:
+                stage_name, status, info, log_id = stage_row
+                command = None
+
+            if command is not None:
+                stage_field = textwrap.dedent("""\
+                {{{{{{#!html
+                <details><summary>{stage_name}</summary>
+                {command}
+                </details>
+                }}}}}}
+                """).format(stage_name=stage_name, command=" ".join(command))
+            else:
+                stage_field = stage_name
+
             log_value = ""
             if log_id and not test_name.startswith('ncomp'):
                 log_name = test_file_name.with_suffix('').name + "-" + stage_name + ".log"
@@ -75,7 +92,7 @@ def format_tests(build_url, tests):
             res += textwrap.dedent(
                 """\
                 {{{{{{#!td
-                {stage_name}
+                {stage_field}
                 }}}}}}
                 {{{{{{#!td
                 {result}
@@ -88,7 +105,7 @@ def format_tests(build_url, tests):
                 }}}}}}
                 |---
                 """).format(
-                stage_name=stage_name, result=results[status], info=info or '',
+                stage_field=stage_field, result=results[status], info=info or '',
                 log_value=log_value)
 
     if not at_least_one_failed:
