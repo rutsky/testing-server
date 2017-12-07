@@ -36,8 +36,9 @@ async def run_check(user, revision_id, solution_blob, assignment_name,
     async with asyncssh.connect(**ssh_params, loop=loop) as conn:
         await conn.run('mkdir -p {}'.format(data_dir), check=True)
         await conn.run('cat > {}'.format(solution_file),
-                       input=solution_blob.decode(),
-                       check=True)
+                       input=solution_blob,
+                       check=True,
+                       encoding=None)
 
         cmd = (
             '/home/cpptest/env/bin/python -u testing.py {solution_file} '
