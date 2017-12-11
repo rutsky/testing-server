@@ -33,7 +33,9 @@ def parse_log_entry(logentry, path_to_assignment_id):
             _logger.warning(
                 "In commit {} path {!r} doesn't correspond to "
                 "commit author {!r}.".format(revision, file, author))
-            continue
+            # Don't skip this case - useful when something is fixed by
+            # teacher. 
+            #continue
 
         if file_path in path_to_assignment_id:
             yield revision, file, author, msg, \
