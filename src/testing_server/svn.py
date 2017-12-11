@@ -38,7 +38,7 @@ def parse_log_entry(logentry, path_to_assignment_id):
             #continue
 
         if file_path in path_to_assignment_id:
-            yield revision, file, author, msg, \
+            yield revision, file, user, msg, \
                   path_to_assignment_id[file_path]
 
 
