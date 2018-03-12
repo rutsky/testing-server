@@ -137,7 +137,8 @@ async def check_revision(db, revision_id, assignment_id, *, ssh_params, loop):
 
     _logger.info("Checking revision {} ({!r})".format(revision_id, curstate))
 
-    assert curstate in ('new', 'failed')
+    assert curstate in ('new', 'failed'), \
+        "Unexpected state {!r}".format(curstate)
 
     await db.set_revision_state(revision_id, 'checking')
 
