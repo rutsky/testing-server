@@ -27,12 +27,12 @@ LINKED_PTR_PATH = "ha3/linked_ptr.hpp"
 LINKED_PTR_COMPONENT = "HA#3 linked_ptr"
 
 LAZY_STRING_ASSIGNMENT_ID = 2
-LAZY_STRING_PATH = "ha4/lazy_string.hpp"
-LAZY_STRING_COMPONENT = "HA#4 lazy_string"
+LAZY_STRING_PATH = "ha5/lazy_string.hpp"
+LAZY_STRING_COMPONENT = "HA#5 lazy_string"
 
 FUNCTION_ASSIGNMENT_ID = 3
-FUNCTION_PATH = "ha5/fn.hpp"
-FUNCTION_COMPONENT = "HA#5 function"
+FUNCTION_PATH = "ha4/fn.hpp"
+FUNCTION_COMPONENT = "HA#4 function"
 
 BIND_ASSIGNMENT_ID = 4
 BIND_PATH = "ha6/bind.hpp"
